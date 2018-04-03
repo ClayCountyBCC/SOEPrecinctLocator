@@ -1,0 +1,121 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8" />
+  <title>Clay County Precinct Locator</title>
+  <link rel="stylesheet" href="https://js.arcgis.com/3.23/esri/css/esri.css">
+  <script defer src="https://js.arcgis.com/3.23/"></script>
+  <link href="Content/bulma.css" rel="stylesheet" />
+  <link href="Content/App.css" rel="stylesheet" />
+</head>
+<body>
+  <form id="searchForm"
+        onsubmit="return PrecinctLocator.Search(event);">
+    <section class="hero is-info">
+      <div class="hero-body">
+        <div class="container">
+          <div class="title">
+            Clay County Precinct Locator
+          </div>
+          <div class="subtitle">
+            This application will help you find the closest Voting precinct.
+          </div>
+        </div>
+      </div>
+    </section>
+    <section style="margin-bottom: 1em;"
+             class="container is-horizontal">
+      <div class="columns is-centered">
+        <div class="column box">
+          <div class="field is-horizontal">
+            <div class="field-label">
+              <label class="label">House Number</label>
+            </div>
+            <div class="field-body">
+              <div class="field">
+                <div class="control is-expanded">
+                  <input id="houseNumber"
+                         tabindex="1"
+                         onblur="PrecinctLocator.ValidateHouseNumber()"
+                         class="input" 
+                         type="number" 
+                         placeholder="1234" />
+                </div>
+                <p style="display: none;"
+                   id="houseNumberError"
+                   class="help is-danger">
+                  This house number is invalid.  It must be numbers and nothing else.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="field is-horizontal">
+            <div class="field-label">
+              <label class="label">Street Name</label>
+            </div>
+            <div class="field-body">
+              <div class="field">
+                <div class="control is-expanded">
+                  <input id="streetName"
+                         onblur="PrecinctLocator.ValidateStreetName()"
+                         tabindex="2"
+                         class="input"
+                         type="text"
+                         placeholder="Blanding" />
+                </div>
+                <p style="display: none;"
+                   id="streetNameError"
+                   class="help is-danger">
+                  The street entered is invalid.  Please type the street name only, a minimum of 3 characters.  For Example:  "Blanding Blvd" should be entered as "Blanding".
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="field is-horizontal">
+            <div class="field-label"></div>
+            <div class="field-body">
+              <div class="field">
+                <div class="control is-grouped">
+                  <button tabindex="3"
+                          class="button is-primary">
+                    Search
+                  </button>
+                  <button tabindex="4"
+                          disabled
+                          id="UseLocation"
+                          onclick="PrecinctLocator.GetLocation()"
+                          class="button is-info">
+                    Use My Current Location
+                  </button>
+                </div>                
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section style="margin-bottom: 1em;"
+             class="container"
+             id="results">
+
+    </section>    
+    <section class="container">
+      <div id="map">
+        <div id="BaseMapToggle"></div>
+      </div>
+    </section>
+    <script src="Scripts/es6-promise.min.js"></script>
+    <script src="Scripts/XHR.js"></script>
+    <script src="Scripts/map.js?201804021727"></script>
+    <script src="Scripts/app.js?201804021727"></script>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function (event)
+      {
+        PrecinctLocator.Start();
+      });
+    </script>
+  </form>
+</body>
+</html>
