@@ -11,11 +11,6 @@ namespace SOEPrecinctLocator.Models
 {
   public static class Constants
   {
-    public const string csWATSC = "IVWATSC";
-    public const string csGIS = "IVGIS";
-    public const string csTracking = "IVTRACKING";
-    public const string csError = "LOG";
-
     public static List<T> Get_Data<T>(string query, string cs)
     {
       try
@@ -70,43 +65,10 @@ namespace SOEPrecinctLocator.Models
 
     public static string Get_ConnStr(string cs)
     {
-      if (cs == Constants.csWATSC)
-      {
-        if (UseProduction())
-        {
-          return ConfigurationManager.ConnectionStrings[cs].ConnectionString;
-        }
-        else
-        {
-          return ConfigurationManager.ConnectionStrings[cs + "QA"].ConnectionString;
-        }
-      }
-      else
-      {
-        return ConfigurationManager.ConnectionStrings[cs].ConnectionString;
-      }
-
+      return ConfigurationManager.ConnectionStrings[cs].ConnectionString;
     }
 
-    public static bool UseProduction()
-    {
-      switch (Environment.MachineName.ToUpper())
-      {
-        case "CLAYBCCDV10":
-          // Test Environment Machines
-          return false;
-
-        //case "MISHL05":
-        case "MISSL01":
-        case "CLAYBCCIIS01":
-        case "CLAYBCCDMZIIS01":
-          return true;
-
-        default:
-          // we'll return false for any machinenames we don't know.
-          return false;
-      }
-    }
+    
 
   }
 }

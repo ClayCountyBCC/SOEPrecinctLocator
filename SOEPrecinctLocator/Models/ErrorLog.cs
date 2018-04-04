@@ -51,7 +51,7 @@ namespace SOEPrecinctLocator.Models
           VALUES (@applicationName, @errorText, @errorMessage,
             @errorStacktrace, @errorSource, @query);";
 
-      using (IDbConnection db = new SqlConnection(Constants.Get_ConnStr(Constants.csError)))
+      using (IDbConnection db = new SqlConnection(Constants.Get_ConnStr("LOG")))
       {
         db.Execute(sql, this);
       }

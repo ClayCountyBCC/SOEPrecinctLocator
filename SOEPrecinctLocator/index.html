@@ -12,22 +12,42 @@
 <body>
   <form id="searchForm"
         onsubmit="return PrecinctLocator.Search(event);">
-    <section class="hero is-info">
+    <section style="margin-bottom: 1em;"
+             class="hero is-info">
       <div class="hero-body">
         <div class="container">
           <div class="title">
             Clay County Precinct Locator
           </div>
           <div class="subtitle">
-            This application will help you find the closest Voting precinct.
+            This application will help you find the closest or a specific Voting precinct.
           </div>
         </div>
       </div>
+      <div class="hero-foot">
+        <div class="container">
+          <nav class="tabs is-boxed">
+            <ul>
+              <li class="is-active">
+                <a href="#">
+                  By Address
+                </a>
+              </li>
+              <li>
+                <a href="#">
+                  By Precinct
+                </a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+      </div>
     </section>
+
     <section style="margin-bottom: 1em;"
              class="container is-horizontal">
       <div class="columns is-centered">
-        <div class="column box">
+        <div class="column">
           <div class="field is-horizontal">
             <div class="field-label">
               <label class="label">House Number</label>
