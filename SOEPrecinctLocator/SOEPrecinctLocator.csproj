@@ -169,7 +169,9 @@
     <Content Include="Global.asax" />
     <Content Include="index.html" />
     <Content Include="Scripts\es6-promise.min.js" />
-    <Content Include="Web.config" />
+    <Content Include="Web.config">
+      <SubType>Designer</SubType>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Start\WebApiConfig.cs" />
@@ -180,8 +182,8 @@
     <Compile Include="Models\Constants.cs" />
     <Compile Include="Models\ErrorLog.cs" />
     <Compile Include="Models\FoundAddress.cs" />
-    <Compile Include="Models\LatLong.cs" />
     <Compile Include="Models\myCache.cs" />
+    <Compile Include="Models\Point.cs" />
     <Compile Include="Models\Precinct.cs" />
     <Compile Include="Models\SearchAddress.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -192,9 +194,11 @@
     <None Include="compilerconfig.json.defaults">
       <DependentUpon>compilerconfig.json</DependentUpon>
     </None>
-    <Content Include="ConnectionStrings.config" />
+    <Content Include="ConnectionStrings.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <SubType>Designer</SubType>
+    </Content>
     <None Include="packages.config" />
-    <Content Include="Scripts\tsconfig.json" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
@@ -207,8 +211,10 @@
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="Scripts\app.ts" />
+    <TypeScriptCompile Include="Scripts\FoundAddress.ts" />
     <TypeScriptCompile Include="Scripts\map.ts" />
     <TypeScriptCompile Include="Scripts\Point.ts" />
+    <TypeScriptCompile Include="Scripts\Precinct.ts" />
     <TypeScriptCompile Include="Scripts\Typings\arcgis-js-api.d.ts" />
     <TypeScriptCompile Include="Scripts\Typings\es6-promise\es6-promise.d.ts" />
     <TypeScriptCompile Include="Scripts\XHR.ts" />

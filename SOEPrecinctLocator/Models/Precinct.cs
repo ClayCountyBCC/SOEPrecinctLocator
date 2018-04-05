@@ -7,18 +7,37 @@ namespace SOEPrecinctLocator.Models
 {
   public class Precinct
   {
-    public int Id { get; set; }
+    public string Id { get; set; }
     public string Name { get; set; }
     public string Address { get; set; }
     public string Comment { get; set; }
-    public double LocationX { get; set; }
-    public double LocationY { get; set; }
-    public LatLong Location { get; set; }
-    public double ExtentMinX { get; set; }
-    public double ExtentMinY { get; set; }
-    public double ExtentMaxX { get; set; }
-    public double ExtentMaxY { get; set; }
-    
+    public double LocationX { get; set; } = double.MinValue;
+    public double LocationY { get; set; } = double.MinValue;
+    public Point Location
+    {
+      get
+      {
+        return new Point(LocationX, LocationY);
+      }
+    }
+    public double ExtentMinX { get; set; } = double.MinValue;
+    public double ExtentMinY { get; set; } = double.MinValue;
+    public Point ExtentMin
+    {
+      get
+      {
+        return new Point(ExtentMinX, ExtentMinY);
+      }
+    }
+    public double ExtentMaxX { get; set; } = double.MinValue;
+    public double ExtentMaxY { get; set; } = double.MinValue;
+    public Point ExtentMax
+    {
+      get
+      {
+        return new Point(ExtentMaxX, ExtentMaxY);
+      }
+    }
 
     public Precinct()
     {
@@ -35,7 +54,7 @@ namespace SOEPrecinctLocator.Models
             LTRIM(RTRIM(NAME0)) + ' ' + 
             LTRIM(RTRIM(CITY_NAME)) + ', FL ' 
             + LTRIM(RTRIM(ZIP5)) Address,
-          L.Comment1 Comment,
+          ISNULL(LTRIM(RTRIM(L.Comment1)), '') Comment,
           L.Shape.STX LocationX,
           L.Shape.STY LocationY,
           ISNULL(B.Shape.STEnvelope().STPointN(1).STX, 0) ExtentMinX, 

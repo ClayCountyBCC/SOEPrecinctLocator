@@ -1,5 +1,5 @@
-var IView;
-(function (IView) {
+var PrecinctLocator;
+(function (PrecinctLocator) {
     var Point = /** @class */ (function () {
         function Point(X, Y) {
             this.X = X;
@@ -7,6 +7,6 @@ var IView;
         }
         return Point;
     }());
-    IView.Point = Point;
-})(IView || (IView = {}));
-//# sourceMappingURL=Point.js.map
+    PrecinctLocator.Point = Point;
+})(PrecinctLocator || (PrecinctLocator = {}));
+//# sourceMappingURL=point.js.map

@@ -1,7 +1,7 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no">
   <meta charset="utf-8" />
   <title>Clay County Precinct Locator</title>
   <link rel="stylesheet" href="https://js.arcgis.com/3.23/esri/css/esri.css">
@@ -28,13 +28,16 @@
         <div class="container">
           <nav class="tabs is-boxed">
             <ul>
-              <li class="is-active">
-                <a href="#">
+              <li id="navByAddress"
+                  class="is-active">
+                <a href="#"
+                   onclick="PrecinctLocator.View('ByAddress')">
                   By Address
                 </a>
               </li>
-              <li>
-                <a href="#">
+              <li id="navByPrecinct">
+                <a href="#"
+                   onclick="PrecinctLocator.View('ByPrecinct')">
                   By Precinct
                 </a>
               </li>
@@ -44,7 +47,8 @@
       </div>
     </section>
 
-    <section style="margin-bottom: 1em;"
+    <section id="ByAddress"
+             style="margin-bottom: 1em;"
              class="container is-horizontal">
       <div class="columns is-centered">
         <div class="column">
@@ -57,9 +61,8 @@
                 <div class="control is-expanded">
                   <input id="houseNumber"
                          tabindex="1"
-                         onblur="PrecinctLocator.ValidateHouseNumber()"
-                         class="input" 
-                         type="number" 
+                         class="input"
+                         type="number"
                          placeholder="1234" />
                 </div>
                 <p style="display: none;"
@@ -78,7 +81,6 @@
               <div class="field">
                 <div class="control is-expanded">
                   <input id="streetName"
-                         onblur="PrecinctLocator.ValidateStreetName()"
                          tabindex="2"
                          class="input"
                          type="text"
@@ -97,29 +99,40 @@
             <div class="field-body">
               <div class="field">
                 <div class="control is-grouped">
-                  <button tabindex="3"
-                          class="button is-primary">
+                  <button type="button"
+                          id="SearchButton"
+                          tabindex="3"
+                          class="button is-primary"
+                          onclick="PrecinctLocator.Search()">
                     Search
                   </button>
-                  <button tabindex="4"
+                  <button type="button"
+                          tabindex="4"
                           disabled
-                          id="UseLocation"
+                          id="LocationButton"
                           onclick="PrecinctLocator.GetLocation()"
                           class="button is-info">
                     Use My Current Location
                   </button>
-                </div>                
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
     </section>
+
+    <section style="display: none; margin-bottom: 1em; max-height: 300px; overflow-x: auto;"
+             id="ByPrecinct"
+             class="container">
+
+    </section>
+
     <section style="margin-bottom: 1em;"
              class="container"
-             id="results">
+             id="Results">
 
-    </section>    
+    </section>
     <section class="container">
       <div id="map">
         <div id="BaseMapToggle"></div>
@@ -127,8 +140,11 @@
     </section>
     <script src="Scripts/es6-promise.min.js"></script>
     <script src="Scripts/XHR.js"></script>
-    <script src="Scripts/map.js?201804021727"></script>
-    <script src="Scripts/app.js?201804021727"></script>
+    <script src="Scripts/Precinct.js"></script>
+    <script src="Scripts/Point.js"></script>
+    <script src="Scripts/FoundAddress.js"></script>
+    <script src="Scripts/map.js?201804031727"></script>
+    <script src="Scripts/app.js?201804031727"></script>
 
     <script>
       document.addEventListener("DOMContentLoaded", function (event)

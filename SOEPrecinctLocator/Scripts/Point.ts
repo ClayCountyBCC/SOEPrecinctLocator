@@ -1,4 +1,4 @@
-﻿namespace IView
+﻿namespace PrecinctLocator
 {
   interface IPoint
   {

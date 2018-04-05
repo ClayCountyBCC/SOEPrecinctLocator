@@ -65,7 +65,16 @@ namespace SOEPrecinctLocator.Models
 
     public static string Get_ConnStr(string cs)
     {
-      return ConfigurationManager.ConnectionStrings[cs].ConnectionString;
+      try
+      {
+        return ConfigurationManager.ConnectionStrings[cs].ConnectionString;
+      }
+      catch(Exception ex)
+      {
+        new ErrorLog(ex);
+        return null;
+      }
+      
     }
 
     
