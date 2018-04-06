@@ -39,7 +39,7 @@ var PrecinctLocator;
                 Longitude: p.coords.longitude
             };
             document.getElementById('map').scrollIntoView();
-            PrecinctLocator.mapController.Zoom(PointToUse, "");
+            PrecinctLocator.mapController.Zoom(PointToUse, null, "");
             SearchEnd("", "is-loading");
         }, function (e) {
             SearchEnd("", "is-loading");
@@ -52,32 +52,47 @@ var PrecinctLocator;
         var Results = document.getElementById("Results");
         var byPrecinct = document.getElementById("ByPrecinct");
         var navByPrecinct = document.getElementById("navByPrecinct");
-        if (id === "ByAddress") {
-            navByAddress.classList.add("is-active");
-            navByPrecinct.classList.remove("is-active");
-            byAddress.style.display = "block";
-            byPrecinct.style.display = "none";
-            Results.style.display = "block";
-        }
-        else {
-            navByAddress.classList.remove("is-active");
-            navByPrecinct.classList.add("is-active");
-            byAddress.style.display = "none";
-            byPrecinct.style.display = "block";
-            Results.style.display = "none";
+        var Print = document.getElementById("Print");
+        var navPrint = document.getElementById("navPrint");
+        // first let's set everything to hidden;
+        navByAddress.classList.remove("is-active");
+        navByPrecinct.classList.remove("is-active");
+        navPrint.classList.remove("is-active");
+        byAddress.style.display = "none"; // byAddress and Results should be shown/hidden as a pair.
+        Results.style.display = "none";
+        byPrecinct.style.display = "none";
+        Print.style.display = "none";
+        switch (id) {
+            case "ByAddress":
+                navByAddress.classList.add("is-active");
+                byAddress.style.display = "block";
+                Results.style.display = "block";
+                break;
+            case "Print":
+                navPrint.classList.add("is-active");
+                Print.style.display = "block";
+                break;
+            case "ByPrecinct":
+                navByPrecinct.classList.add("is-active");
+                byPrecinct.style.display = "block";
+                break;
         }
     }
     PrecinctLocator.View = View;
     function Search() {
         if (ValidateStreetName() || ValidateHouseNumber()) {
-            console.log('returning false');
             return false;
         }
         SearchStart("is-loading", "");
         PostSearch()
             .then(function (foundAddresses) {
-            console.log('found addresses', foundAddresses);
             BuildResults(foundAddresses);
+            if (foundAddresses.length === 1) {
+                var results = document.getElementById("Results");
+                window.scrollTo(0, results.offsetTop);
+                var fa = foundAddresses[0];
+                PrecinctLocator.mapController.Zoom(fa.AddressPoint, GetPrecinctFromAddress(fa), fa.WholeAddress);
+            }
             SearchEnd("is-loading", "");
             return true;
         })
@@ -90,6 +105,17 @@ var PrecinctLocator;
         return true;
     }
     PrecinctLocator.Search = Search;
+    function GetPrecinctFromAddress(fa) {
+        var p = PrecinctLocator.Precincts.filter(function (j) {
+            return j.Id === fa.Precinct;
+        });
+        if (p.length === 0) {
+            return null;
+        }
+        else {
+            return p[0];
+        }
+    }
     function BuildPrecincts(pl) {
         var Precincts = document.getElementById("ByPrecinct");
         clearElement(Precincts);
@@ -100,9 +126,14 @@ var PrecinctLocator;
         table.appendChild(BuildPrecinctsHeaderRow());
         var tbody = document.createElement("tbody");
         table.appendChild(tbody);
-        for (var _i = 0, pl_1 = pl; _i < pl_1.length; _i++) {
-            var p = pl_1[_i];
-            tbody.appendChild(BuildPrecinctsRow(p));
+        if (pl.length === 0) {
+            tbody.appendChild(BuildPrecinctsErrorRow());
+        }
+        else {
+            for (var _i = 0, pl_1 = pl; _i < pl_1.length; _i++) {
+                var p = pl_1[_i];
+                tbody.appendChild(BuildPrecinctsRow(p));
+            }
         }
         Precincts.appendChild(df);
     }
@@ -116,9 +147,14 @@ var PrecinctLocator;
         table.appendChild(BuildResultsHeaderRow());
         var tbody = document.createElement("tbody");
         table.appendChild(tbody);
-        for (var _i = 0, fa_1 = fa; _i < fa_1.length; _i++) {
-            var a = fa_1[_i];
-            tbody.appendChild(BuildResultsRow(a));
+        if (fa.length === 0) {
+            tbody.appendChild(BuildResultsErrorRow());
+        }
+        else {
+            for (var _i = 0, fa_1 = fa; _i < fa_1.length; _i++) {
+                var a = fa_1[_i];
+                tbody.appendChild(BuildResultsRow(a));
+            }
         }
         results.appendChild(df);
     }
@@ -128,18 +164,39 @@ var PrecinctLocator;
         tr.appendChild(CreateTableElement(p.Name, "20%", "td"));
         tr.appendChild(CreateTableElement(p.Address, "30%", "td"));
         tr.appendChild(CreateTableElement(p.Comment, "30%", "td"));
-        tr.appendChild(CreatePrecinctsTableButton(p, "10%"));
+        tr.appendChild(CreatePrecinctsTableButton(p, "View on Map", "10%"));
+        return tr;
+    }
+    function BuildPrecinctsErrorRow() {
+        var tr = document.createElement("tr");
+        tr.appendChild(CreateTableElement("", "10%", "td"));
+        tr.appendChild(CreateTableElement("", "20%", "td"));
+        tr.appendChild(CreateTableElement("There was a problem retrieving the Precinct Information.", "", "td"));
+        tr.appendChild(CreateTableElement("", "25%", "td"));
+        tr.appendChild(CreatePrecinctsTableButton(null, "View on Map", "10%"));
         return tr;
     }
     function BuildResultsRow(fa) {
         var tr = document.createElement("tr");
         tr.appendChild(CreateTableElement(fa.WholeAddress + " " + fa.City + ", " + fa.Zip, "40%", "td"));
         tr.appendChild(CreateTableElement(fa.Precinct, "15%", "td"));
-        var p = PrecinctLocator.Precincts.filter(function (j) {
-            return j.Id === fa.Precinct;
-        });
-        tr.appendChild(CreateTableElement(p[0].Name, "35%", "td"));
-        tr.appendChild(CreateResultsTableButton(fa.AddressPoint, fa.WholeAddress, "10%"));
+        var p = GetPrecinctFromAddress(fa);
+        if (p === null) {
+            tr.appendChild(CreateTableElement("", "35%", "td"));
+        }
+        else {
+            tr.appendChild(CreateTableElement(p.Name, "35%", "td"));
+        }
+        tr.appendChild(CreateResultsTableButton(fa.AddressPoint, p, fa.WholeAddress, "10%"));
+        return tr;
+    }
+    function BuildResultsErrorRow() {
+        var tr = document.createElement("tr");
+        tr.appendChild(CreateTableElement("This address was not found.", "", "td"));
+        tr.appendChild(CreateTableElement("", "", "td"));
+        tr.appendChild(CreateTableElement("", "", "td"));
+        var disabledButton = CreateResultsTableButton(null, null, "", "");
+        tr.appendChild(disabledButton);
         return tr;
     }
     function BuildPrecinctsHeaderRow() {
@@ -157,7 +214,7 @@ var PrecinctLocator;
         var thead = document.createElement("thead");
         var tr = document.createElement("tr");
         thead.appendChild(tr);
-        tr.appendChild(CreateTableElement("Address Found", "40%", "TH"));
+        tr.appendChild(CreateTableElement("Address", "40%", "TH"));
         tr.appendChild(CreateTableElement("Precinct #", "15%", "TH"));
         tr.appendChild(CreateTableElement("Precinct Info", "35%", "TH"));
         tr.appendChild(CreateTableElement("", "10%", "TH"));
@@ -165,11 +222,12 @@ var PrecinctLocator;
     }
     function CreateTableElement(value, width, colTag) {
         var d = document.createElement(colTag);
-        d.style.width = width;
+        if (width.length > 0)
+            d.style.width = width;
         d.appendChild(document.createTextNode(value));
         return d;
     }
-    function CreateResultsTableButton(point, Address, width) {
+    function CreateResultsTableButton(point, Precinct, Address, width) {
         var td = document.createElement("td");
         td.style.width = width;
         var add = document.createElement("button");
@@ -177,26 +235,36 @@ var PrecinctLocator;
         add.classList.add("button");
         add.classList.add("is-primary");
         add.appendChild(document.createTextNode("View on Map"));
-        add.onclick = function () {
-            var results = document.getElementById("Results");
-            window.scrollTo(0, results.offsetTop);
-            PrecinctLocator.mapController.Zoom(point, Address);
-        };
+        if (point === null) {
+            add.disabled = true;
+        }
+        else {
+            add.onclick = function () {
+                var results = document.getElementById("Results");
+                window.scrollTo(0, results.offsetTop);
+                PrecinctLocator.mapController.Zoom(point, Precinct, Address);
+            };
+        }
         td.appendChild(add);
         return td;
     }
-    function CreatePrecinctsTableButton(p, width) {
+    function CreatePrecinctsTableButton(p, label, width) {
         var td = document.createElement("td");
         td.style.width = width;
         var add = document.createElement("button");
         add.type = "button";
         add.classList.add("button");
         add.classList.add("is-primary");
-        add.appendChild(document.createTextNode("View on Map"));
-        add.onclick = function () {
-            document.getElementById('map').scrollIntoView();
-            PrecinctLocator.mapController.SetExtent(p);
-        };
+        add.appendChild(document.createTextNode(label));
+        if (p === null) {
+            add.disabled = true;
+        }
+        else {
+            add.onclick = function () {
+                document.getElementById('map').scrollIntoView();
+                PrecinctLocator.mapController.SetExtent(p);
+            };
+        }
         td.appendChild(add);
         return td;
     }

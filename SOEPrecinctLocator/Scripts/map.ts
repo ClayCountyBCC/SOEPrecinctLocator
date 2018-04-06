@@ -39,7 +39,6 @@ namespace PrecinctLocator
             zoom: 11,
             logo: false,
             center: [-81.80, 29.950]
-            //showInfoWindowOnClick: false
           }
           mapController.map = new Map(mapDiv, mapOptions);
           var toggle = new BasemapToggle({
@@ -47,13 +46,6 @@ namespace PrecinctLocator
             basemap: "satellite" //hybrid
           }, "BaseMapToggle");
           toggle.startup();
-          //mapController.map.on("load", function (evt)
-          //{
-          //  IView.mapLoadCompleted();
-          //});
-          //let dynamicLayerOptions = {
-          //  opacity: .3
-          //};
           let SOELayer = new ArcGISDynamicMapServiceLayer("https://maps.claycountygov.com:6443/arcgis/rest/services/SOE/MapServer");//, dynamicLayerOptions);
           mapController.LocationLayer = new esri.layers.GraphicsLayer();
           mapController.map.addLayers([SOELayer, mapController.LocationLayer]);
@@ -89,10 +81,11 @@ namespace PrecinctLocator
           e.ymin = Precinct.ExtentMin.Latitude;
           e.spatialReference = new SpatialReference(4326);
           m.setExtent(e, true);
+          console.log('map', m);
       });
     }
 
-    public Zoom(p: any, Address: string): void
+    public Zoom(p: any, Precinct: Precinct, Address: string): void
     {
       let mapController = this;
       let m = this.map;
@@ -123,9 +116,6 @@ namespace PrecinctLocator
           textSymbol.setHaloSize(3);
           ll.clear();
           var pt = new Point([p.Longitude, p.Latitude]);
-          //var p = new Point([latlong.OriginalX, latlong.OriginalY], new SpatialReference({ wkid: 4326 }));
-          //var wmIncident = esri.geometry.geographicToWebMercator(p);
-          //var graphic = new Graphic(wmIncident);
           var font = new esri.symbol.Font();
           font.setSize("14pt");
           font.setWeight(esri.symbol.Font.WEIGHT_BOLD);
@@ -136,7 +126,14 @@ namespace PrecinctLocator
           s.setSymbol(textSymbol);
           ll.add(graphic);
           ll.add(s);
-          m.centerAndZoom(pt, 16);
+          if (Precinct !== null)
+          {
+            mapController.SetExtent(Precinct);
+          }
+          else
+          {
+            m.centerAndZoom(pt, 14);
+          }
         });
 
     }

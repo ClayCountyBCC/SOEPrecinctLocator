@@ -3,6 +3,7 @@
 <head>
   <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no">
   <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=11">
   <title>Clay County Precinct Locator</title>
   <link rel="stylesheet" href="https://js.arcgis.com/3.23/esri/css/esri.css">
   <script defer src="https://js.arcgis.com/3.23/"></script>
@@ -41,12 +42,23 @@
                   By Precinct
                 </a>
               </li>
+              <li id="navPrint">
+                <a href="#"
+                   onclick="PrecinctLocator.View('Print')">
+                  Print
+                </a>
+              </li>
             </ul>
           </nav>
         </div>
       </div>
     </section>
-
+    <section style="display: none; margin-bottom: 1em; max-height: 300px; overflow-x: auto;"
+             class="container"
+             id="Print">
+      <p>Clicking this button will take you to a printable version of this website.  You can then use it and print it as needed.</p>
+      <p><a class="button is-primary" href="http://public.claycountygov.com/SOEPrecinctLocator">Printable Version</a></p>
+    </section>
     <section id="ByAddress"
              style="margin-bottom: 1em;"
              class="container is-horizontal">
@@ -149,8 +161,30 @@
     <script>
       document.addEventListener("DOMContentLoaded", function (event)
       {
+        document.getElementById('houseNumber').onkeydown =
+          function (event)
+          {
+            var e = event || window.event;
+            if (e.keyCode == 13)
+            {
+              PrecinctLocator.Search();
+            }
+          }
+
+        document.getElementById('streetName').onkeydown =
+          function (event)
+          {
+            var e = event || window.event;
+            if (e.keyCode == 13)
+            {
+              PrecinctLocator.Search();
+            }
+          }
         PrecinctLocator.Start();
+
       });
+
+
     </script>
   </form>
 </body>

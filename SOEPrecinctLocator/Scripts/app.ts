@@ -52,7 +52,7 @@ namespace PrecinctLocator
           Longitude: p.coords.longitude
         };
         document.getElementById('map').scrollIntoView();
-        mapController.Zoom(PointToUse, "");
+        mapController.Zoom(PointToUse, null, "");
         SearchEnd("", "is-loading");
       }, function (e)
       {
@@ -67,21 +67,31 @@ namespace PrecinctLocator
     let Results = document.getElementById("Results");
     let byPrecinct = document.getElementById("ByPrecinct");
     let navByPrecinct = document.getElementById("navByPrecinct");
-    if (id === "ByAddress")
+    let Print = document.getElementById("Print");
+    let navPrint = document.getElementById("navPrint");
+    // first let's set everything to hidden;
+    navByAddress.classList.remove("is-active");
+    navByPrecinct.classList.remove("is-active");
+    navPrint.classList.remove("is-active");
+    byAddress.style.display = "none"; // byAddress and Results should be shown/hidden as a pair.
+    Results.style.display = "none";
+    byPrecinct.style.display = "none";
+    Print.style.display = "none";
+    switch (id)
     {
-      navByAddress.classList.add("is-active");
-      navByPrecinct.classList.remove("is-active");
-      byAddress.style.display = "block";
-      byPrecinct.style.display = "none";
-      Results.style.display = "block";
-    }
-    else
-    {
-      navByAddress.classList.remove("is-active");
-      navByPrecinct.classList.add("is-active");
-      byAddress.style.display = "none";
-      byPrecinct.style.display = "block";
-      Results.style.display = "none";
+      case "ByAddress":
+        navByAddress.classList.add("is-active");
+        byAddress.style.display = "block";
+        Results.style.display = "block";
+        break;
+      case "Print":
+        navPrint.classList.add("is-active");
+        Print.style.display = "block";
+        break;
+      case "ByPrecinct":
+        navByPrecinct.classList.add("is-active");
+        byPrecinct.style.display = "block";
+        break;
     }
   }
 
@@ -89,15 +99,20 @@ namespace PrecinctLocator
   {
     if (ValidateStreetName() || ValidateHouseNumber())
     {
-      console.log('returning false');
       return false;
     }
     SearchStart("is-loading", "");
     PostSearch()
       .then(function (foundAddresses)
       {
-        console.log('found addresses', foundAddresses);
         BuildResults(foundAddresses);
+        if (foundAddresses.length === 1)
+        {
+          var results = document.getElementById("Results");
+          window.scrollTo(0, results.offsetTop);
+          let fa = foundAddresses[0];
+          mapController.Zoom(fa.AddressPoint, GetPrecinctFromAddress(fa), fa.WholeAddress);          
+        }
         SearchEnd("is-loading", "");
         return true;
       })
@@ -111,6 +126,22 @@ namespace PrecinctLocator
     return true;
   }
 
+  function GetPrecinctFromAddress(fa: FoundAddress):Precinct
+  {
+    let p = Precincts.filter(function (j)
+    {
+      return j.Id === fa.Precinct;
+    });
+    if (p.length === 0)
+    {
+      return null;
+    }
+    else
+    {
+      return p[0];
+    }
+  }
+
   function BuildPrecincts(pl: Array<Precinct>): void
   {
     let Precincts = document.getElementById("ByPrecinct");
@@ -122,9 +153,16 @@ namespace PrecinctLocator
     table.appendChild(BuildPrecinctsHeaderRow());
     let tbody = document.createElement("tbody");
     table.appendChild(tbody);
-    for (let p of pl)
+    if (pl.length === 0)
     {
-      tbody.appendChild(BuildPrecinctsRow(p));
+      tbody.appendChild(BuildPrecinctsErrorRow());
+    }
+    else
+    {
+      for (let p of pl)
+      {
+        tbody.appendChild(BuildPrecinctsRow(p));
+      }
     }
     Precincts.appendChild(df);
   }
@@ -140,10 +178,18 @@ namespace PrecinctLocator
     table.appendChild(BuildResultsHeaderRow());
     let tbody = document.createElement("tbody");
     table.appendChild(tbody);
-    for (let a of fa)
+    if (fa.length === 0)
     {
-      tbody.appendChild(BuildResultsRow(a));
+      tbody.appendChild(BuildResultsErrorRow());
     }
+    else
+    {
+      for (let a of fa)
+      {
+        tbody.appendChild(BuildResultsRow(a));
+      }
+    }
+
     results.appendChild(df);
   }
 
@@ -154,7 +200,18 @@ namespace PrecinctLocator
     tr.appendChild(CreateTableElement(p.Name, "20%", "td"));    
     tr.appendChild(CreateTableElement(p.Address, "30%", "td"));
     tr.appendChild(CreateTableElement(p.Comment, "30%", "td"));
-    tr.appendChild(CreatePrecinctsTableButton(p, "10%"));
+    tr.appendChild(CreatePrecinctsTableButton(p, "View on Map", "10%"));
+    return tr;
+  }
+
+  function BuildPrecinctsErrorRow(): HTMLTableRowElement
+  {
+    let tr = document.createElement("tr");
+    tr.appendChild(CreateTableElement("", "10%", "td"));
+    tr.appendChild(CreateTableElement("", "20%", "td"));
+    tr.appendChild(CreateTableElement("There was a problem retrieving the Precinct Information.", "", "td"));
+    tr.appendChild(CreateTableElement("", "25%", "td"));
+    tr.appendChild(CreatePrecinctsTableButton(null, "View on Map", "10%"));
     return tr;
   }
 
@@ -163,12 +220,27 @@ namespace PrecinctLocator
     let tr = document.createElement("tr");
     tr.appendChild(CreateTableElement(fa.WholeAddress + " " + fa.City + ", " + fa.Zip, "40%", "td"));
     tr.appendChild(CreateTableElement(fa.Precinct, "15%", "td"));
-    let p = Precincts.filter(function (j)
+    let p = GetPrecinctFromAddress(fa);
+    if (p === null)
     {
-      return j.Id === fa.Precinct;
-    });
-    tr.appendChild(CreateTableElement(p[0].Name, "35%", "td"));
-    tr.appendChild(CreateResultsTableButton(fa.AddressPoint, fa.WholeAddress, "10%"));
+      tr.appendChild(CreateTableElement("", "35%", "td"));
+    }
+    else
+    {
+      tr.appendChild(CreateTableElement(p.Name, "35%", "td"));
+    }    
+    tr.appendChild(CreateResultsTableButton(fa.AddressPoint, p, fa.WholeAddress, "10%"));
+    return tr;
+  }
+
+  function BuildResultsErrorRow(): HTMLTableRowElement
+  {
+    let tr = document.createElement("tr");
+    tr.appendChild(CreateTableElement("This address was not found.", "", "td"));
+    tr.appendChild(CreateTableElement("", "", "td"));
+    tr.appendChild(CreateTableElement("", "", "td"));
+    let disabledButton = CreateResultsTableButton(null, null, "", "");
+    tr.appendChild(disabledButton);
     return tr;
   }
 
@@ -190,22 +262,22 @@ namespace PrecinctLocator
     let thead = document.createElement("thead");
     let tr = document.createElement("tr");
     thead.appendChild(tr);
-    tr.appendChild(CreateTableElement("Address Found", "40%", "TH"));
+    tr.appendChild(CreateTableElement("Address", "40%", "TH"));
     tr.appendChild(CreateTableElement("Precinct #", "15%", "TH"));
     tr.appendChild(CreateTableElement("Precinct Info", "35%", "TH"));
     tr.appendChild(CreateTableElement("", "10%", "TH"));
     return thead;
   }
 
-  function CreateTableElement(value, width, colTag)
+  function CreateTableElement(value, width, colTag):HTMLTableCellElement
   {
-    var d = document.createElement(colTag);
-    d.style.width = width;
+    var d = <HTMLTableCellElement>document.createElement(colTag);    
+    if(width.length > 0) d.style.width = width;
     d.appendChild(document.createTextNode(value));
     return d;
   }
 
-  function CreateResultsTableButton(point: Point, Address: string, width: string): HTMLTableCellElement
+  function CreateResultsTableButton(point: Point, Precinct: Precinct, Address: string, width: string): HTMLTableCellElement
   {
     let td = document.createElement("td");
     td.style.width = width;
@@ -214,17 +286,24 @@ namespace PrecinctLocator
     add.classList.add("button");
     add.classList.add("is-primary");
     add.appendChild(document.createTextNode("View on Map"));
-    add.onclick = function ()
+    if (point === null)
     {
-      var results = document.getElementById("Results");
-      window.scrollTo(0, results.offsetTop);
-      mapController.Zoom(point, Address);
+      add.disabled = true;
+    }
+    else
+    {
+      add.onclick = function ()
+      {
+        var results = document.getElementById("Results");
+        window.scrollTo(0, results.offsetTop);
+        mapController.Zoom(point, Precinct, Address);
+      }
     }
     td.appendChild(add);
     return td;
   }
 
-  function CreatePrecinctsTableButton(p: Precinct, width: string): HTMLTableCellElement
+  function CreatePrecinctsTableButton(p: Precinct, label: string, width: string): HTMLTableCellElement
   {
     let td = document.createElement("td");
     td.style.width = width;
@@ -232,12 +311,20 @@ namespace PrecinctLocator
     add.type = "button";
     add.classList.add("button");
     add.classList.add("is-primary");
-    add.appendChild(document.createTextNode("View on Map"));
-    add.onclick = function ()
+    add.appendChild(document.createTextNode(label));
+    if (p === null)
     {
-      
-      document.getElementById('map').scrollIntoView();
-      mapController.SetExtent(p);
+      add.disabled = true;
+    }
+    else
+    {
+      add.onclick = function ()
+      {
+        document.getElementById('map').scrollIntoView();
+        mapController.SetExtent(p);
+      }
+
+
     }
     td.appendChild(add);
     return td;
