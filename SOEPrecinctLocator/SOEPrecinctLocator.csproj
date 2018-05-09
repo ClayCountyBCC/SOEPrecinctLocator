@@ -200,6 +200,7 @@
     </Content>
     <None Include="packages.config" />
     <None Include="Properties\PublishProfiles\DV10.pubxml" />
+    <None Include="Properties\PublishProfiles\Public.pubxml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
