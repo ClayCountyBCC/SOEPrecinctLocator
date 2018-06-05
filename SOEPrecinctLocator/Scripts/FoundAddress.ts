@@ -55,8 +55,10 @@ namespace PrecinctLocator
         let location = document.createElement("div");
         let results = document.createElement("div");
 
+        container.classList.add("is-marginless");
         container.classList.add("columns");
         container.style.border = "1px solid #dbdbdb";
+
 
         location.classList.add("column");
         location.classList.add("is-one-third");     
@@ -81,7 +83,7 @@ namespace PrecinctLocator
         
         results.classList.add("column");
         results.classList.add("is-two-thirds");
-        results.appendChild(FoundAddress.CreateDistrictsTable(a));
+        results.appendChild(FoundAddress.CreateDistrictsTable(a.Locations, "#Results"));
 
         container.appendChild(location);
         container.appendChild(results);
@@ -91,25 +93,7 @@ namespace PrecinctLocator
       results.appendChild(df);
     }
 
-    public static BuildResultsRow(fa: FoundAddress): HTMLTableRowElement
-    {
-      let tr = document.createElement("tr");
-      if (fa.City.length > 0)
-      {
-        tr.appendChild(CreateTableColumn(fa.WholeAddress + " " + fa.City + ", " + fa.Zip, "td"));
-      }
-      else
-      {
-        tr.appendChild(CreateTableColumn(fa.WholeAddress, "td"));
-      }
-      
-      let td = document.createElement("td");
-      td.appendChild(FoundAddress.CreateDistrictsTable(fa));
-      tr.appendChild(td);
-      return tr;
-    }
-
-    public static CreateDistrictsTable(fa: FoundAddress): HTMLTableElement
+    public static CreateDistrictsTable(locations: Array<Location>, tableType: string): HTMLTableElement
     {
       let table = document.createElement("table");
       table.classList.add("table");
@@ -117,9 +101,9 @@ namespace PrecinctLocator
       table.appendChild(FoundAddress.BuildDistrictsHeaderRow());
       let tbody = document.createElement("tbody");
       table.appendChild(tbody);
-      for (let l of fa.Locations)
+      for (let l of locations)
       {
-        tbody.appendChild(FoundAddress.BuildDistrictsTableRow(l));
+        tbody.appendChild(FoundAddress.BuildDistrictsTableRow(l, tableType));
       }
       return table;
     }
@@ -137,13 +121,13 @@ namespace PrecinctLocator
       return thead;
     }
 
-    public static BuildDistrictsTableRow(l: Location): HTMLTableRowElement
+    public static BuildDistrictsTableRow(l: Location, tableType: string): HTMLTableRowElement
     {
       let tr = document.createElement("tr");
       tr.appendChild(CreateTableColumn(l.label, "TD"));
       tr.appendChild(CreateTableColumn(l.value, "TD"));
       tr.appendChild(CreateTableColumn(l.extra, "TD"));
-      tr.appendChild(FoundAddress.CreateDistrictsTableButton(l));
+      tr.appendChild(FoundAddress.CreateDistrictsTableButton(l, tableType));
       return tr;
     }
 
@@ -166,7 +150,7 @@ namespace PrecinctLocator
       return thead;
     }
 
-    public static CreateDistrictsTableButton(l: Location): HTMLTableCellElement
+    public static CreateDistrictsTableButton(l: Location, tableType: string): HTMLTableCellElement
     {
       let td = document.createElement("td");
       let add = document.createElement("button");
@@ -182,7 +166,7 @@ namespace PrecinctLocator
       {
         add.onclick = function ()
         {
-          PrecinctLocator.RemovePreviousSelections("#Results", <HTMLTableRowElement>td.parentElement);
+          PrecinctLocator.RemovePreviousSelections(tableType, <HTMLTableRowElement>td.parentElement);
           add.classList.add("is-inverted");
           td.parentElement.classList.add("is-selected");
           var results = document.getElementById("Results");

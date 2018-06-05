@@ -29,6 +29,7 @@ namespace PrecinctLocator
     LAMSBDLayerURL = "https://maps.claycountygov.com:6443/arcgis/rest/services/LAMSBD/MapServer/0";
     LAMSBDLayer: any;
     Layers: Array<any> = [];
+    AllLocations: Array<Location> = [];
 
 
     constructor(public mapDiv: string)
@@ -98,11 +99,10 @@ namespace PrecinctLocator
                 outFields: ["PRECINCT", "OBJECTID"],
                 id: "precinctBoundaryLayer"
               });
-          mapController.PrecinctBoundaryLayer.on("load", mapController.MapAndLayersLoadedCheck);
           mapController.Layers.push(mapController.PrecinctBoundaryLayer);
 
-          let layersVisible = true;
-          let opacityValue = 0;
+          let layersVisible = false;
+          let opacityValue = 1;
 
           mapController.CommissionerDistrictLayer =
             new FeatureLayer(mapController.CommissionerDistrictLayerURL,
@@ -113,7 +113,6 @@ namespace PrecinctLocator
                 opacity: opacityValue,
                 id: "commissionerLayer"
               });
-          mapController.CommissionerDistrictLayer.on("load", mapController.MapAndLayersLoadedCheck);
           mapController.Layers.push(mapController.CommissionerDistrictLayer);
 
           mapController.HouseDistrictLayer =
@@ -125,7 +124,6 @@ namespace PrecinctLocator
                 opacity: opacityValue,
                 id: "houseDistrictLayer"
               });
-          mapController.HouseDistrictLayer.on("load", mapController.MapAndLayersLoadedCheck);
           mapController.Layers.push(mapController.HouseDistrictLayer);
 
           mapController.SenateDistrictLayer =
@@ -137,7 +135,6 @@ namespace PrecinctLocator
                 opacity: opacityValue,
                 id: "senateDistrictLayer"
               });
-          mapController.SenateDistrictLayer.on("load", mapController.MapAndLayersLoadedCheck);
           mapController.Layers.push(mapController.SenateDistrictLayer);
 
           mapController.SchoolBoardDistrictLayer =
@@ -149,7 +146,6 @@ namespace PrecinctLocator
                 opacity: opacityValue,
                 id: "schoolboardDistrictLayer"
               });
-          mapController.SchoolBoardDistrictLayer.on("load", mapController.MapAndLayersLoadedCheck);
           mapController.Layers.push(mapController.SchoolBoardDistrictLayer);
 
           mapController.MunicipalBoundaryLayer =
@@ -161,7 +157,6 @@ namespace PrecinctLocator
                 opacity: opacityValue,
                 id: "municipalLayer"
               });
-          mapController.MunicipalBoundaryLayer.on("load", mapController.MapAndLayersLoadedCheck);
           mapController.Layers.push(mapController.MunicipalBoundaryLayer);
 
           mapController.CommunityDevDistrictLayer =
@@ -173,7 +168,6 @@ namespace PrecinctLocator
                 opacity: opacityValue,
                 id: "cddLayer"
               });
-          mapController.CommunityDevDistrictLayer.on("load", mapController.MapAndLayersLoadedCheck);
           mapController.Layers.push(mapController.CommunityDevDistrictLayer);
 
           mapController.LAMSBDLayer = new FeatureLayer(mapController.LAMSBDLayerURL,
@@ -184,10 +178,47 @@ namespace PrecinctLocator
               opacity: opacityValue,
               id: "lamsbdLayer"
             });
-          mapController.LAMSBDLayer.on("load", mapController.MapAndLayersLoadedCheck);
           mapController.Layers.push(mapController.LAMSBDLayer);
-          
+          mapController.SetupAndQueryAllLayers(mapController.Layers);
           mapController.map.addLayers(mapController.Layers);
+        });
+    }
+
+    public SetupAndQueryAllLayers(layers: Array<any>):void
+    {
+      require([
+        "esri/tasks/query",
+        "dojo/promise/all"],
+        function (Query, all)
+        {
+          let promises = [];
+          for (let layer of layers)
+          {
+            if (layer.id !== "precinctLocationLayer" && layer.id !== "locationLayer")
+            {
+              layer.on("load", mapController.MapAndLayersLoadedCheck);
+              let query = new Query();
+              query.where = "1=1";
+              query.outFields = ["*"];
+
+              let promise = layer.queryFeatures(query,
+                function (response)
+                {
+                  mapController.ParseFeature(mapController.AllLocations, layer, response.features)
+                });
+              promises.push(promise);
+            }
+          }
+          all(promises).then(function ()
+          {
+            mapController.AllLocations.sort(function (a, b)
+            {
+              if (a.label < b.label) return -1;
+              if (a.label > b.label) return 1;
+              return 0;              
+            });
+            PrecinctLocator.BuildDistrictList();
+          })
         });
     }
 
@@ -288,7 +319,7 @@ namespace PrecinctLocator
                   {
                     if (feature.geometry.contains(pt))
                     {
-                      mapController.ParseFeature(fa.Locations, layer, feature);
+                      mapController.ParseFeature(fa.Locations, layer, [feature]);
                     }
                   }
                 }, function (errorResponse)
@@ -306,59 +337,62 @@ namespace PrecinctLocator
         });
     }
     
-    public ParseFeature(locations: Array<Location>, layer: any, feature: any): void
+    public ParseFeature(locations: Array<Location>, layer: any, features: Array<any>): void
     {
-      let location = new Location();
-      location.id = layer.id;
-      location.shape = feature.geometry;
-      location.extent = feature.geometry.getExtent();
-
-      switch (layer.id)
+      for (let feature of features)
       {
-        case "precinctBoundaryLayer":
-          location.label = "Precinct";
-          location.value = feature.attributes.PRECINCT.toString();
-          break;
+        let location = new Location();
+        location.id = layer.id;
+        location.shape = feature.geometry;
+        location.extent = feature.geometry.getExtent();
 
-        case "commissionerLayer":
-          location.label = "Commissioner District";
-          location.value = feature.attributes.District.toString();
-          location.extra = feature.attributes.CommissionerName;
-          break;
+        switch (layer.id)
+        {
+          case "precinctBoundaryLayer":
+            location.label = "Precinct";
+            location.value = feature.attributes.PRECINCT.toString();
+            break;
 
-        case "houseDistrictLayer":
-          location.label = "Florida House";
-          location.value = feature.attributes.NAME;
-          break;
+          case "commissionerLayer":
+            location.label = "Commissioner District";
+            location.value = feature.attributes.District.toString();
+            location.extra = feature.attributes.CommissionerName;
+            break;
 
-        case "senateDistrictLayer":
-          location.label = "Florida Senate";
-          location.value = feature.attributes.NAME;
-          break;
+          case "houseDistrictLayer":
+            location.label = "Florida House";
+            location.value = feature.attributes.District;
+            break;
 
-        case "schoolboardDistrictLayer":
-          location.label = "School Board District";
-          location.value = feature.attributes.District.toString();
-          location.extra = feature.attributes.Name;
-          break;
+          case "senateDistrictLayer":
+            location.label = "Florida Senate";
+            location.value = feature.attributes.District;
+            break;
 
-        case "lamsbdLayer":
-          location.label = "Lake Asbury MSBU"
-          location.value = feature.attributes.Name;
-          break;
+          case "schoolboardDistrictLayer":
+            location.label = "School Board District";
+            location.value = feature.attributes.District.toString();
+            location.extra = feature.attributes.Name;
+            break;
 
-        case "municipalLayer":
-          location.label = "Municipality";
-          location.value = feature.attributes.Municipality;
-          break;
+          case "lamsbdLayer":
+            location.label = "Lake Asbury MSBU"
+            location.value = feature.attributes.Name;
+            break;
 
-        case "cddLayer":
-          location.label = "CDD";
-          location.value = feature.attributes.Name;
-          break;
+          case "municipalLayer":
+            location.label = "Municipality";
+            location.value = feature.attributes.Municipality;
+            break;
 
+          case "cddLayer":
+            location.label = "Community Dev District";
+            location.value = feature.attributes.Name;
+            break;
+
+        }
+        locations.push(location);
       }
-      locations.push(location);
     }
 
     public Zoom(fa: FoundAddress): void

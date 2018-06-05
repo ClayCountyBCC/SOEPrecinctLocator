@@ -13,3 +13,19 @@
   right: 20px;
   z-index: 50;
 }
+
+/*div.navbar-item.is-active
+.test
+{
+  background-color: #ffffff;
+  color: #209cee !important;
+}
+div.navbar-item.has-dropdown.is-hoverable > a.navbar-link
+{
+
+}
+/*a.navbar-item:hover, a.navbar-link:hover
+{
+  background-color: antiquewhite !important;
+  color: #222222 !important;
+}*/

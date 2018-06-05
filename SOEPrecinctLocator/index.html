@@ -4,7 +4,7 @@
   <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no">
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=11">
-  <title>Clay County Precinct Locator</title>
+  <title>Clay County Voter Location Information</title>
   <link rel="stylesheet" href="https://js.arcgis.com/3.23/esri/css/esri.css">
   <script defer src="https://js.arcgis.com/3.23/"></script>
   <link href="Content/bulma.css" rel="stylesheet" />
@@ -14,15 +14,15 @@
   <form id="searchForm"
         onsubmit="return PrecinctLocator.Search(event);">
     <section style="margin-bottom: 1em;"
-             class="hero is-info">
+             class="hero is-info is-bold">
       <div style="padding-top: 15px; padding-bottom: 15px;"
            class="hero-body">
         <div class="container">
           <div class="title">
-            Clay County Precinct Locator
+            Clay County Voter Location Information
           </div>
           <div class="subtitle">
-            This application will help you find the closest or a specific Voting precinct.
+            This application will help you find the closest or a specific Voting precinct, and show the various voting districts in Clay County.
           </div>
         </div>
       </div>
@@ -37,18 +37,27 @@
                   By Address
                 </a>
               </li>
+              <li>
+
+              </li>
               <li id="navByPrecinct">
                 <a href="#"
                    onclick="PrecinctLocator.View('ByPrecinct')">
-                  By Precinct
+                  By District/Precinct
                 </a>
               </li>
-              <li id="navPrint">
+              <li id="navByMap">
+                <a href="#"
+                   onclick="PrecinctLocator.View('ByMap')">
+                  Map Only
+                </a>
+              </li>
+              <!--<li id="navPrint">
                 <a href="#"
                    onclick="PrecinctLocator.View('Print')">
                   Print
                 </a>
-              </li>
+              </li>-->
             </ul>
           </nav>
         </div>
@@ -60,6 +69,7 @@
       <p>Clicking this button will take you to a printable version of this website.  You can then use it and print it as needed.</p>
       <p><a class="button is-primary" href="http://public.claycountygov.com/SOEPrecinctLocator">Printable Version</a></p>
     </section>
+
     <section id="ByAddress"
              style="margin-bottom: 1em;"
              class="container">
@@ -149,11 +159,56 @@
 
     </section>
 
-    <section style="display: none; margin-bottom: 1em; max-height: 200px; overflow-x: auto;"
+    <section style="display: none; margin-bottom: 1em; max-height: 300px; overflow-x: auto;"
              id="ByPrecinct"
-             class="container"></section>
+             class="container">
+      <div class="field">
+        <label class="label">Filter Districts</label>
+        <div class="control">
+          <label class="radio">
+            <input type="radio" name="district" value="precinctBoundaryLayer" />
+            Precinct
+          </label>
+          <label class="radio">
+            <input type="radio" name="district" value="commissionerLayer" />
+            Commissioner
+          </label>
+          <label class="radio">
+            <input type="radio" name="district" value="schoolboardDistrictLayer" />
+            School Board
+          </label>
+          <label class="radio">
+            <input type="radio" name="district" value="houseDistrictLayer" />
+            Florida House
+          </label>
+          <label class="radio">
+            <input type="radio" name="district" value="senateDistrictLayer" />
+            Florida Senate
+          </label>
+          <label class="radio">
+            <input type="radio" name="district" value="cddLayer" />
+            Community Development
+          </label>
+          <label class="radio">
+            <input type="radio" name="district" value="lamsbdLayer" />
+            LAMSBD
+          </label>
+          <label class="radio">
+            <input type="radio" name="district" value="municipalLayer" />
+            Municipality
+          </label>
+          <label class="radio">
+            <input type="radio" name="district" checked value="all" />
+            Show All
+          </label>
+        </div>
+      </div>
+      <div id="DistrictList">
 
-    <section style="margin-bottom: 1em;"
+      </div>
+    </section>
+
+    <section style="margin-bottom: 1em; max-height: 300px; overflow-x: auto;"
              class="container"
              id="Results"></section>
     <section class="container">

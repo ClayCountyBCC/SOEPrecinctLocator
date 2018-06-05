@@ -29,6 +29,7 @@ var PrecinctLocator;
                 var container = document.createElement("div");
                 var location_1 = document.createElement("div");
                 var results_1 = document.createElement("div");
+                container.classList.add("is-marginless");
                 container.classList.add("columns");
                 container.style.border = "1px solid #dbdbdb";
                 location_1.classList.add("column");
@@ -51,36 +52,23 @@ var PrecinctLocator;
                 }
                 results_1.classList.add("column");
                 results_1.classList.add("is-two-thirds");
-                results_1.appendChild(FoundAddress.CreateDistrictsTable(a));
+                results_1.appendChild(FoundAddress.CreateDistrictsTable(a.Locations, "#Results"));
                 container.appendChild(location_1);
                 container.appendChild(results_1);
                 df.appendChild(container);
             }
             results.appendChild(df);
         };
-        FoundAddress.BuildResultsRow = function (fa) {
-            var tr = document.createElement("tr");
-            if (fa.City.length > 0) {
-                tr.appendChild(PrecinctLocator.CreateTableColumn(fa.WholeAddress + " " + fa.City + ", " + fa.Zip, "td"));
-            }
-            else {
-                tr.appendChild(PrecinctLocator.CreateTableColumn(fa.WholeAddress, "td"));
-            }
-            var td = document.createElement("td");
-            td.appendChild(FoundAddress.CreateDistrictsTable(fa));
-            tr.appendChild(td);
-            return tr;
-        };
-        FoundAddress.CreateDistrictsTable = function (fa) {
+        FoundAddress.CreateDistrictsTable = function (locations, tableType) {
             var table = document.createElement("table");
             table.classList.add("table");
             table.classList.add("is-fullwidth");
             table.appendChild(FoundAddress.BuildDistrictsHeaderRow());
             var tbody = document.createElement("tbody");
             table.appendChild(tbody);
-            for (var _i = 0, _a = fa.Locations; _i < _a.length; _i++) {
-                var l = _a[_i];
-                tbody.appendChild(FoundAddress.BuildDistrictsTableRow(l));
+            for (var _i = 0, locations_1 = locations; _i < locations_1.length; _i++) {
+                var l = locations_1[_i];
+                tbody.appendChild(FoundAddress.BuildDistrictsTableRow(l, tableType));
             }
             return table;
         };
@@ -94,12 +82,12 @@ var PrecinctLocator;
             tr.appendChild(PrecinctLocator.CreateTableColumn("", "TH", "10%"));
             return thead;
         };
-        FoundAddress.BuildDistrictsTableRow = function (l) {
+        FoundAddress.BuildDistrictsTableRow = function (l, tableType) {
             var tr = document.createElement("tr");
             tr.appendChild(PrecinctLocator.CreateTableColumn(l.label, "TD"));
             tr.appendChild(PrecinctLocator.CreateTableColumn(l.value, "TD"));
             tr.appendChild(PrecinctLocator.CreateTableColumn(l.extra, "TD"));
-            tr.appendChild(FoundAddress.CreateDistrictsTableButton(l));
+            tr.appendChild(FoundAddress.CreateDistrictsTableButton(l, tableType));
             return tr;
         };
         FoundAddress.BuildResultsErrorRow = function () {
@@ -116,7 +104,7 @@ var PrecinctLocator;
             tr.appendChild(PrecinctLocator.CreateTableColumn("Districts", "TH", "60%"));
             return thead;
         };
-        FoundAddress.CreateDistrictsTableButton = function (l) {
+        FoundAddress.CreateDistrictsTableButton = function (l, tableType) {
             var td = document.createElement("td");
             var add = document.createElement("button");
             add.type = "button";
@@ -128,7 +116,7 @@ var PrecinctLocator;
             }
             else {
                 add.onclick = function () {
-                    PrecinctLocator.RemovePreviousSelections("#Results", td.parentElement);
+                    PrecinctLocator.RemovePreviousSelections(tableType, td.parentElement);
                     add.classList.add("is-inverted");
                     td.parentElement.classList.add("is-selected");
                     var results = document.getElementById("Results");
