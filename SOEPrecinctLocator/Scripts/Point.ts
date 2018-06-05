@@ -11,11 +11,13 @@
 
   export class Point implements IPoint
   {
+    X: number;
+    Y: number;
     IsValid: boolean;
     Latitude: number;
     Longitude: number;
 
-    constructor(public X: number, public Y: number)
+    constructor()
     {
 
     }

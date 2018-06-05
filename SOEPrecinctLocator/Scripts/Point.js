@@ -1,9 +1,7 @@
 var PrecinctLocator;
 (function (PrecinctLocator) {
     var Point = /** @class */ (function () {
-        function Point(X, Y) {
-            this.X = X;
-            this.Y = Y;
+        function Point() {
         }
         return Point;
     }());

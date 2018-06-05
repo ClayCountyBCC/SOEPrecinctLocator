@@ -15,7 +15,8 @@
         onsubmit="return PrecinctLocator.Search(event);">
     <section style="margin-bottom: 1em;"
              class="hero is-info">
-      <div class="hero-body">
+      <div style="padding-top: 15px; padding-bottom: 15px;"
+           class="hero-body">
         <div class="container">
           <div class="title">
             Clay County Precinct Locator
@@ -61,16 +62,18 @@
     </section>
     <section id="ByAddress"
              style="margin-bottom: 1em;"
-             class="container is-horizontal">
-      <div class="columns is-centered">
-        <div class="column">
+             class="container">
+      <div style="margin-bottom: 0;"
+           class="columns">
+        <div style="padding-bottom: 0;"
+             class="column">
           <div class="field is-horizontal">
             <div class="field-label">
               <label class="label">House Number</label>
             </div>
             <div class="field-body">
               <div class="field">
-                <div class="control is-expanded">
+                <div class="control">
                   <input id="houseNumber"
                          tabindex="1"
                          class="input"
@@ -85,13 +88,16 @@
               </div>
             </div>
           </div>
+        </div>
+        <div style="padding-bottom: 0;"
+             class="column">
           <div class="field is-horizontal">
             <div class="field-label">
               <label class="label">Street Name</label>
             </div>
             <div class="field-body">
               <div class="field">
-                <div class="control is-expanded">
+                <div class="control">
                   <input id="streetName"
                          tabindex="2"
                          class="input"
@@ -106,11 +112,18 @@
               </div>
             </div>
           </div>
+
+        </div>
+      </div>
+      <div class="columns">
+        <div class="column">
           <div class="field is-horizontal">
-            <div class="field-label"></div>
+            <div class="field-label">
+              <label class="label"></label>
+            </div>
             <div class="field-body">
               <div class="field">
-                <div class="control is-grouped">
+                <div class="control">
                   <button type="button"
                           id="SearchButton"
                           tabindex="3"
@@ -131,20 +144,18 @@
             </div>
           </div>
         </div>
+        <div class="column"></div>
       </div>
+
     </section>
 
-    <section style="display: none; margin-bottom: 1em; max-height: 300px; overflow-x: auto;"
+    <section style="display: none; margin-bottom: 1em; max-height: 200px; overflow-x: auto;"
              id="ByPrecinct"
-             class="container">
-
-    </section>
+             class="container"></section>
 
     <section style="margin-bottom: 1em;"
              class="container"
-             id="Results">
-
-    </section>
+             id="Results"></section>
     <section class="container">
       <div id="map">
         <div id="BaseMapToggle"></div>
@@ -155,8 +166,9 @@
     <script src="Scripts/Precinct.js"></script>
     <script src="Scripts/Point.js"></script>
     <script src="Scripts/FoundAddress.js"></script>
-    <script src="Scripts/map.js?201804031727"></script>
-    <script src="Scripts/app.js?201804031727"></script>
+    <script src="Scripts/Location.js"></script>
+    <script src="Scripts/map.js?2018099999"></script>
+    <script src="Scripts/app.js?2018088888"></script>
 
     <script>
       document.addEventListener("DOMContentLoaded", function (event)

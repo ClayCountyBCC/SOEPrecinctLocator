@@ -43,20 +43,22 @@ namespace PrecinctLocator
   export function GetLocation(): void
   {
     // Here we need to get a point and then do something with that point.
-    SearchStart("", "is-loading");
+    HandleSearchElements("", "is-loading", true);
     navigator.geolocation.getCurrentPosition(
       function (p)
       {
-        let PointToUse = {
-          Latitude: p.coords.latitude,
-          Longitude: p.coords.longitude
-        };
-        document.getElementById('map').scrollIntoView();
-        mapController.Zoom(PointToUse, null, "");
-        SearchEnd("", "is-loading");
+        let pointToUse = new Point();
+        pointToUse.Latitude = p.coords.latitude;
+        pointToUse.Longitude = p.coords.longitude;
+        pointToUse.IsValid = true;
+        let fa = new FoundAddress();
+        fa.AddressPoint = pointToUse;
+        fa.WholeAddress = "Current Location";
+        FoundAddress.Load([fa]);        
+        HandleSearchElements("", "is-loading", false);
       }, function (e)
       {
-        SearchEnd("", "is-loading");
+        HandleSearchElements("", "is-loading", false);
       });
   }
 
@@ -101,45 +103,23 @@ namespace PrecinctLocator
     {
       return false;
     }
-    SearchStart("is-loading", "");
+    HandleSearchElements("is-loading", "", true);
     PostSearch()
       .then(function (foundAddresses)
       {
-        BuildResults(foundAddresses);
-        if (foundAddresses.length === 1)
-        {
-          var results = document.getElementById("Results");
-          window.scrollTo(0, results.offsetTop);
-          let fa = foundAddresses[0];
-          mapController.Zoom(fa.AddressPoint, GetPrecinctFromAddress(fa), fa.WholeAddress);          
-        }
-        SearchEnd("is-loading", "");
+        console.log('found addresses', foundAddresses);
+        FoundAddress.Load(foundAddresses);
+        HandleSearchElements("is-loading", "", false);
         return true;
       })
-      .catch(function ()
+      .catch(function (response)
       {
         // fail
-        console.log('failed to find addresses');
-        SearchEnd("is-loading", "");
+        console.log('failed to find addresses', response);
+        HandleSearchElements("is-loading", "", false);
         return false;
       });
     return true;
-  }
-
-  function GetPrecinctFromAddress(fa: FoundAddress):Precinct
-  {
-    let p = Precincts.filter(function (j)
-    {
-      return j.Id === fa.Precinct;
-    });
-    if (p.length === 0)
-    {
-      return null;
-    }
-    else
-    {
-      return p[0];
-    }
   }
 
   function BuildPrecincts(pl: Array<Precinct>): void
@@ -167,80 +147,25 @@ namespace PrecinctLocator
     Precincts.appendChild(df);
   }
 
-  function BuildResults(fa: Array<FoundAddress>):void
-  {
-    let results = document.getElementById("Results");
-    clearElement(results);
-    let df = document.createDocumentFragment();
-    let table = document.createElement("table");
-    table.classList.add("table");
-    df.appendChild(table);
-    table.appendChild(BuildResultsHeaderRow());
-    let tbody = document.createElement("tbody");
-    table.appendChild(tbody);
-    if (fa.length === 0)
-    {
-      tbody.appendChild(BuildResultsErrorRow());
-    }
-    else
-    {
-      for (let a of fa)
-      {
-        tbody.appendChild(BuildResultsRow(a));
-      }
-    }
-
-    results.appendChild(df);
-  }
-
   function BuildPrecinctsRow(p: Precinct): HTMLTableRowElement
   {
     let tr = document.createElement("tr");
-    tr.appendChild(CreateTableElement(p.Id, "15%", "td"));
-    tr.appendChild(CreateTableElement(p.Name, "20%", "td"));    
-    tr.appendChild(CreateTableElement(p.Address, "30%", "td"));
-    tr.appendChild(CreateTableElement(p.Comment, "30%", "td"));
-    tr.appendChild(CreatePrecinctsTableButton(p, "View on Map", "10%"));
+    tr.appendChild(CreateTableColumn(p.Id, "td"));
+    tr.appendChild(CreateTableColumn(p.Name, "td"));    
+    tr.appendChild(CreateTableColumn(p.Address, "td"));
+    tr.appendChild(CreateTableColumn(p.Comment, "td"));
+    tr.appendChild(CreatePrecinctsTableButton(p, "View on Map"));
     return tr;
   }
 
   function BuildPrecinctsErrorRow(): HTMLTableRowElement
   {
     let tr = document.createElement("tr");
-    tr.appendChild(CreateTableElement("", "10%", "td"));
-    tr.appendChild(CreateTableElement("", "20%", "td"));
-    tr.appendChild(CreateTableElement("There was a problem retrieving the Precinct Information.", "", "td"));
-    tr.appendChild(CreateTableElement("", "25%", "td"));
-    tr.appendChild(CreatePrecinctsTableButton(null, "View on Map", "10%"));
-    return tr;
-  }
-
-  function BuildResultsRow(fa: FoundAddress): HTMLTableRowElement
-  {
-    let tr = document.createElement("tr");
-    tr.appendChild(CreateTableElement(fa.WholeAddress + " " + fa.City + ", " + fa.Zip, "40%", "td"));
-    tr.appendChild(CreateTableElement(fa.Precinct, "15%", "td"));
-    let p = GetPrecinctFromAddress(fa);
-    if (p === null)
-    {
-      tr.appendChild(CreateTableElement("", "35%", "td"));
-    }
-    else
-    {
-      tr.appendChild(CreateTableElement(p.Name, "35%", "td"));
-    }    
-    tr.appendChild(CreateResultsTableButton(fa.AddressPoint, p, fa.WholeAddress, "10%"));
-    return tr;
-  }
-
-  function BuildResultsErrorRow(): HTMLTableRowElement
-  {
-    let tr = document.createElement("tr");
-    tr.appendChild(CreateTableElement("This address was not found.", "", "td"));
-    tr.appendChild(CreateTableElement("", "", "td"));
-    tr.appendChild(CreateTableElement("", "", "td"));
-    let disabledButton = CreateResultsTableButton(null, null, "", "");
-    tr.appendChild(disabledButton);
+    tr.appendChild(CreateTableColumn("", "10%", "td"));
+    tr.appendChild(CreateTableColumn("", "20%", "td"));
+    tr.appendChild(CreateTableColumn("There was a problem retrieving the Precinct Information.", "", "td"));
+    tr.appendChild(CreateTableColumn("", "25%", "td"));
+    tr.appendChild(CreatePrecinctsTableButton(null, "View on Map"));
     return tr;
   }
 
@@ -249,64 +174,25 @@ namespace PrecinctLocator
     let thead = document.createElement("thead");
     let tr = document.createElement("tr");
     thead.appendChild(tr);
-    tr.appendChild(CreateTableElement("Precinct #", "15%", "TH"));
-    tr.appendChild(CreateTableElement("Name", "20%", "TH"));
-    tr.appendChild(CreateTableElement("Address", "30%", "TH"));
-    tr.appendChild(CreateTableElement("Comment", "25%", "TH"));
-    tr.appendChild(CreateTableElement("", "10%", "TH"));
+    tr.appendChild(CreateTableColumn("Precinct #", "TH", "15%"));
+    tr.appendChild(CreateTableColumn("Name", "TH", "20%"));
+    tr.appendChild(CreateTableColumn("Address", "TH", "30%"));
+    tr.appendChild(CreateTableColumn("Comment", "TH", "25%"));
+    tr.appendChild(CreateTableColumn("", "TH", "10%"));
     return thead;
   }
 
-  function BuildResultsHeaderRow():HTMLTableSectionElement
+  export function CreateTableColumn(value: string, colTag: string, width: string = ""): HTMLTableCellElement
   {
-    let thead = document.createElement("thead");
-    let tr = document.createElement("tr");
-    thead.appendChild(tr);
-    tr.appendChild(CreateTableElement("Address", "40%", "TH"));
-    tr.appendChild(CreateTableElement("Precinct #", "15%", "TH"));
-    tr.appendChild(CreateTableElement("Precinct Info", "35%", "TH"));
-    tr.appendChild(CreateTableElement("", "10%", "TH"));
-    return thead;
-  }
-
-  function CreateTableElement(value, width, colTag):HTMLTableCellElement
-  {
-    var d = <HTMLTableCellElement>document.createElement(colTag);    
-    if(width.length > 0) d.style.width = width;
+    var d = <HTMLTableCellElement>document.createElement(colTag);
+    if (width.length > 0) d.style.width = width;
     d.appendChild(document.createTextNode(value));
     return d;
   }
 
-  function CreateResultsTableButton(point: Point, Precinct: Precinct, Address: string, width: string): HTMLTableCellElement
+  function CreatePrecinctsTableButton(p: Precinct, label: string): HTMLTableCellElement
   {
     let td = document.createElement("td");
-    td.style.width = width;
-    let add = document.createElement("button");
-    add.type = "button";
-    add.classList.add("button");
-    add.classList.add("is-primary");
-    add.appendChild(document.createTextNode("View on Map"));
-    if (point === null)
-    {
-      add.disabled = true;
-    }
-    else
-    {
-      add.onclick = function ()
-      {
-        var results = document.getElementById("Results");
-        window.scrollTo(0, results.offsetTop);
-        mapController.Zoom(point, Precinct, Address);
-      }
-    }
-    td.appendChild(add);
-    return td;
-  }
-
-  function CreatePrecinctsTableButton(p: Precinct, label: string, width: string): HTMLTableCellElement
-  {
-    let td = document.createElement("td");
-    td.style.width = width;
     let add = document.createElement("button");
     add.type = "button";
     add.classList.add("button");
@@ -321,33 +207,42 @@ namespace PrecinctLocator
       add.onclick = function ()
       {
         document.getElementById('map').scrollIntoView();
-        mapController.SetExtent(p);
+        //mapController.SetExtent(p);
+        RemovePreviousSelections(<HTMLTableRowElement>td.parentElement);
+        add.classList.add("is-inverted");
+        td.parentElement.classList.add("is-selected");
       }
-
-
     }
     td.appendChild(add);
     return td;
   }
 
-  function SearchStart(searchButtonClass: string, locationButtonClass: string):void
+  function RemovePreviousSelections(tr: HTMLTableRowElement)
   {
-    let SearchButton = <HTMLButtonElement>document.getElementById("SearchButton");
-    let LocationButton = <HTMLButtonElement>document.getElementById("LocationButton");    
-    if (searchButtonClass.length > 0) SearchButton.classList.add(searchButtonClass);
-    if (locationButtonClass.length > 0) LocationButton.classList.add(locationButtonClass);
-    SearchButton.disabled = true;
-    LocationButton.disabled = true;
+    RemoveClass("#ByPrecinct table tr.is-selected", "is-selected");
+    RemoveClass("#ByPrecinct table tr button.is-inverted", "is-inverted");
   }
 
-  function SearchEnd(searchButtonClass: string, locationButtonClass: string): void
+  function RemoveClass(query: string, classToRemove: string): void
+  {
+    let qs = document.querySelectorAll(query);
+    if (qs.length > 0)
+    {
+      for (let i = 0; i < qs.length; i++)
+      {
+        qs.item(i).classList.remove(classToRemove);
+      }
+    } 
+  }
+
+  function HandleSearchElements(searchButtonClass: string, locationButtonClass: string, Add: boolean)
   {
     let SearchButton = <HTMLButtonElement>document.getElementById("SearchButton");
     let LocationButton = <HTMLButtonElement>document.getElementById("LocationButton");
-    if (searchButtonClass.length > 0) SearchButton.classList.remove(searchButtonClass);
-    if (locationButtonClass.length > 0) LocationButton.classList.remove(locationButtonClass);
-    SearchButton.disabled = false;
-    LocationButton.disabled = false;
+    if (searchButtonClass.length > 0) Add ? SearchButton.classList.add(searchButtonClass) : SearchButton.classList.remove(searchButtonClass);
+    if (locationButtonClass.length > 0) Add ? LocationButton.classList.add(locationButtonClass) : LocationButton.classList.remove(locationButtonClass);
+    SearchButton.disabled = Add;
+    LocationButton.disabled = Add;
   }
 
   export function ValidateStreetName(): boolean

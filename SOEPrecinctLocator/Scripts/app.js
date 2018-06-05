@@ -32,17 +32,19 @@ var PrecinctLocator;
     }
     function GetLocation() {
         // Here we need to get a point and then do something with that point.
-        SearchStart("", "is-loading");
+        HandleSearchElements("", "is-loading", true);
         navigator.geolocation.getCurrentPosition(function (p) {
-            var PointToUse = {
-                Latitude: p.coords.latitude,
-                Longitude: p.coords.longitude
-            };
-            document.getElementById('map').scrollIntoView();
-            PrecinctLocator.mapController.Zoom(PointToUse, null, "");
-            SearchEnd("", "is-loading");
+            var pointToUse = new PrecinctLocator.Point();
+            pointToUse.Latitude = p.coords.latitude;
+            pointToUse.Longitude = p.coords.longitude;
+            pointToUse.IsValid = true;
+            var fa = new PrecinctLocator.FoundAddress();
+            fa.AddressPoint = pointToUse;
+            fa.WholeAddress = "Current Location";
+            PrecinctLocator.FoundAddress.Load([fa]);
+            HandleSearchElements("", "is-loading", false);
         }, function (e) {
-            SearchEnd("", "is-loading");
+            HandleSearchElements("", "is-loading", false);
         });
     }
     PrecinctLocator.GetLocation = GetLocation;
@@ -83,39 +85,23 @@ var PrecinctLocator;
         if (ValidateStreetName() || ValidateHouseNumber()) {
             return false;
         }
-        SearchStart("is-loading", "");
+        HandleSearchElements("is-loading", "", true);
         PostSearch()
             .then(function (foundAddresses) {
-            BuildResults(foundAddresses);
-            if (foundAddresses.length === 1) {
-                var results = document.getElementById("Results");
-                window.scrollTo(0, results.offsetTop);
-                var fa = foundAddresses[0];
-                PrecinctLocator.mapController.Zoom(fa.AddressPoint, GetPrecinctFromAddress(fa), fa.WholeAddress);
-            }
-            SearchEnd("is-loading", "");
+            console.log('found addresses', foundAddresses);
+            PrecinctLocator.FoundAddress.Load(foundAddresses);
+            HandleSearchElements("is-loading", "", false);
             return true;
         })
-            .catch(function () {
+            .catch(function (response) {
             // fail
-            console.log('failed to find addresses');
-            SearchEnd("is-loading", "");
+            console.log('failed to find addresses', response);
+            HandleSearchElements("is-loading", "", false);
             return false;
         });
         return true;
     }
     PrecinctLocator.Search = Search;
-    function GetPrecinctFromAddress(fa) {
-        var p = PrecinctLocator.Precincts.filter(function (j) {
-            return j.Id === fa.Precinct;
-        });
-        if (p.length === 0) {
-            return null;
-        }
-        else {
-            return p[0];
-        }
-    }
     function BuildPrecincts(pl) {
         var Precincts = document.getElementById("ByPrecinct");
         clearElement(Precincts);
@@ -137,120 +123,46 @@ var PrecinctLocator;
         }
         Precincts.appendChild(df);
     }
-    function BuildResults(fa) {
-        var results = document.getElementById("Results");
-        clearElement(results);
-        var df = document.createDocumentFragment();
-        var table = document.createElement("table");
-        table.classList.add("table");
-        df.appendChild(table);
-        table.appendChild(BuildResultsHeaderRow());
-        var tbody = document.createElement("tbody");
-        table.appendChild(tbody);
-        if (fa.length === 0) {
-            tbody.appendChild(BuildResultsErrorRow());
-        }
-        else {
-            for (var _i = 0, fa_1 = fa; _i < fa_1.length; _i++) {
-                var a = fa_1[_i];
-                tbody.appendChild(BuildResultsRow(a));
-            }
-        }
-        results.appendChild(df);
-    }
     function BuildPrecinctsRow(p) {
         var tr = document.createElement("tr");
-        tr.appendChild(CreateTableElement(p.Id, "15%", "td"));
-        tr.appendChild(CreateTableElement(p.Name, "20%", "td"));
-        tr.appendChild(CreateTableElement(p.Address, "30%", "td"));
-        tr.appendChild(CreateTableElement(p.Comment, "30%", "td"));
-        tr.appendChild(CreatePrecinctsTableButton(p, "View on Map", "10%"));
+        tr.appendChild(CreateTableColumn(p.Id, "td"));
+        tr.appendChild(CreateTableColumn(p.Name, "td"));
+        tr.appendChild(CreateTableColumn(p.Address, "td"));
+        tr.appendChild(CreateTableColumn(p.Comment, "td"));
+        tr.appendChild(CreatePrecinctsTableButton(p, "View on Map"));
         return tr;
     }
     function BuildPrecinctsErrorRow() {
         var tr = document.createElement("tr");
-        tr.appendChild(CreateTableElement("", "10%", "td"));
-        tr.appendChild(CreateTableElement("", "20%", "td"));
-        tr.appendChild(CreateTableElement("There was a problem retrieving the Precinct Information.", "", "td"));
-        tr.appendChild(CreateTableElement("", "25%", "td"));
-        tr.appendChild(CreatePrecinctsTableButton(null, "View on Map", "10%"));
-        return tr;
-    }
-    function BuildResultsRow(fa) {
-        var tr = document.createElement("tr");
-        tr.appendChild(CreateTableElement(fa.WholeAddress + " " + fa.City + ", " + fa.Zip, "40%", "td"));
-        tr.appendChild(CreateTableElement(fa.Precinct, "15%", "td"));
-        var p = GetPrecinctFromAddress(fa);
-        if (p === null) {
-            tr.appendChild(CreateTableElement("", "35%", "td"));
-        }
-        else {
-            tr.appendChild(CreateTableElement(p.Name, "35%", "td"));
-        }
-        tr.appendChild(CreateResultsTableButton(fa.AddressPoint, p, fa.WholeAddress, "10%"));
-        return tr;
-    }
-    function BuildResultsErrorRow() {
-        var tr = document.createElement("tr");
-        tr.appendChild(CreateTableElement("This address was not found.", "", "td"));
-        tr.appendChild(CreateTableElement("", "", "td"));
-        tr.appendChild(CreateTableElement("", "", "td"));
-        var disabledButton = CreateResultsTableButton(null, null, "", "");
-        tr.appendChild(disabledButton);
+        tr.appendChild(CreateTableColumn("", "10%", "td"));
+        tr.appendChild(CreateTableColumn("", "20%", "td"));
+        tr.appendChild(CreateTableColumn("There was a problem retrieving the Precinct Information.", "", "td"));
+        tr.appendChild(CreateTableColumn("", "25%", "td"));
+        tr.appendChild(CreatePrecinctsTableButton(null, "View on Map"));
         return tr;
     }
     function BuildPrecinctsHeaderRow() {
         var thead = document.createElement("thead");
         var tr = document.createElement("tr");
         thead.appendChild(tr);
-        tr.appendChild(CreateTableElement("Precinct #", "15%", "TH"));
-        tr.appendChild(CreateTableElement("Name", "20%", "TH"));
-        tr.appendChild(CreateTableElement("Address", "30%", "TH"));
-        tr.appendChild(CreateTableElement("Comment", "25%", "TH"));
-        tr.appendChild(CreateTableElement("", "10%", "TH"));
+        tr.appendChild(CreateTableColumn("Precinct #", "TH", "15%"));
+        tr.appendChild(CreateTableColumn("Name", "TH", "20%"));
+        tr.appendChild(CreateTableColumn("Address", "TH", "30%"));
+        tr.appendChild(CreateTableColumn("Comment", "TH", "25%"));
+        tr.appendChild(CreateTableColumn("", "TH", "10%"));
         return thead;
     }
-    function BuildResultsHeaderRow() {
-        var thead = document.createElement("thead");
-        var tr = document.createElement("tr");
-        thead.appendChild(tr);
-        tr.appendChild(CreateTableElement("Address", "40%", "TH"));
-        tr.appendChild(CreateTableElement("Precinct #", "15%", "TH"));
-        tr.appendChild(CreateTableElement("Precinct Info", "35%", "TH"));
-        tr.appendChild(CreateTableElement("", "10%", "TH"));
-        return thead;
-    }
-    function CreateTableElement(value, width, colTag) {
+    function CreateTableColumn(value, colTag, width) {
+        if (width === void 0) { width = ""; }
         var d = document.createElement(colTag);
         if (width.length > 0)
             d.style.width = width;
         d.appendChild(document.createTextNode(value));
         return d;
     }
-    function CreateResultsTableButton(point, Precinct, Address, width) {
+    PrecinctLocator.CreateTableColumn = CreateTableColumn;
+    function CreatePrecinctsTableButton(p, label) {
         var td = document.createElement("td");
-        td.style.width = width;
-        var add = document.createElement("button");
-        add.type = "button";
-        add.classList.add("button");
-        add.classList.add("is-primary");
-        add.appendChild(document.createTextNode("View on Map"));
-        if (point === null) {
-            add.disabled = true;
-        }
-        else {
-            add.onclick = function () {
-                var results = document.getElementById("Results");
-                window.scrollTo(0, results.offsetTop);
-                PrecinctLocator.mapController.Zoom(point, Precinct, Address);
-            };
-        }
-        td.appendChild(add);
-        return td;
-    }
-    function CreatePrecinctsTableButton(p, label, width) {
-        var td = document.createElement("td");
-        td.style.width = width;
         var add = document.createElement("button");
         add.type = "button";
         add.classList.add("button");
@@ -262,31 +174,36 @@ var PrecinctLocator;
         else {
             add.onclick = function () {
                 document.getElementById('map').scrollIntoView();
-                PrecinctLocator.mapController.SetExtent(p);
+                //mapController.SetExtent(p);
+                RemovePreviousSelections(td.parentElement);
+                add.classList.add("is-inverted");
+                td.parentElement.classList.add("is-selected");
             };
         }
         td.appendChild(add);
         return td;
     }
-    function SearchStart(searchButtonClass, locationButtonClass) {
-        var SearchButton = document.getElementById("SearchButton");
-        var LocationButton = document.getElementById("LocationButton");
-        if (searchButtonClass.length > 0)
-            SearchButton.classList.add(searchButtonClass);
-        if (locationButtonClass.length > 0)
-            LocationButton.classList.add(locationButtonClass);
-        SearchButton.disabled = true;
-        LocationButton.disabled = true;
+    function RemovePreviousSelections(tr) {
+        RemoveClass("#ByPrecinct table tr.is-selected", "is-selected");
+        RemoveClass("#ByPrecinct table tr button.is-inverted", "is-inverted");
     }
-    function SearchEnd(searchButtonClass, locationButtonClass) {
+    function RemoveClass(query, classToRemove) {
+        var qs = document.querySelectorAll(query);
+        if (qs.length > 0) {
+            for (var i = 0; i < qs.length; i++) {
+                qs.item(i).classList.remove(classToRemove);
+            }
+        }
+    }
+    function HandleSearchElements(searchButtonClass, locationButtonClass, Add) {
         var SearchButton = document.getElementById("SearchButton");
         var LocationButton = document.getElementById("LocationButton");
         if (searchButtonClass.length > 0)
-            SearchButton.classList.remove(searchButtonClass);
+            Add ? SearchButton.classList.add(searchButtonClass) : SearchButton.classList.remove(searchButtonClass);
         if (locationButtonClass.length > 0)
-            LocationButton.classList.remove(locationButtonClass);
-        SearchButton.disabled = false;
-        LocationButton.disabled = false;
+            Add ? LocationButton.classList.add(locationButtonClass) : LocationButton.classList.remove(locationButtonClass);
+        SearchButton.disabled = Add;
+        LocationButton.disabled = Add;
     }
     function ValidateStreetName() {
         var streetName = document.getElementById("streetName");

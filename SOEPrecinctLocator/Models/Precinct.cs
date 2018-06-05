@@ -7,6 +7,7 @@ namespace SOEPrecinctLocator.Models
 {
   public class Precinct
   {
+    public int BoundaryId { get; set; }
     public string Id { get; set; }
     public string Name { get; set; }
     public string Address { get; set; }
@@ -48,6 +49,7 @@ namespace SOEPrecinctLocator.Models
     {
       string query = @"
         SELECT
+          B.OBJECTID BoundaryId,
           L.ID Id,
           L.NAME Name,
           LTRIM(RTRIM(L.Number)) + ' ' + 

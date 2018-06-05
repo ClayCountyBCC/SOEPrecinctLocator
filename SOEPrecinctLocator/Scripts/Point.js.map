@@ -1,1 +1,1 @@
-{"version":3,"file":"point.js","sourceRoot":"","sources":["point.ts"],"names":[],"mappings":"AAAA,IAAU,eAAe,CAsBxB;AAtBD,WAAU,eAAe;IAWvB;QAME,eAAmB,CAAS,EAAS,CAAS;YAA3B,MAAC,GAAD,CAAC,CAAQ;YAAS,MAAC,GAAD,CAAC,CAAQ;QAG9C,CAAC;QACH,YAAC;IAAD,CAAC,AAVD,IAUC;IAVY,qBAAK,QAUjB,CAAA;AACH,CAAC,EAtBS,eAAe,KAAf,eAAe,QAsBxB"}
+{"version":3,"file":"point.js","sourceRoot":"","sources":["point.ts"],"names":[],"mappings":"AAAA,IAAU,eAAe,CAwBxB;AAxBD,WAAU,eAAe;IAWvB;QAQE;QAGA,CAAC;QACH,YAAC;IAAD,CAAC,AAZD,IAYC;IAZY,qBAAK,QAYjB,CAAA;AACH,CAAC,EAxBS,eAAe,KAAf,eAAe,QAwBxB"}

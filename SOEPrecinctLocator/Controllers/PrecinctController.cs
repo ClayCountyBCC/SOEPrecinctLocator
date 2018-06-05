@@ -11,14 +11,14 @@ namespace SOEPrecinctLocator.Controllers
   public class PrecinctController : ApiController
   {
     
-    public List<Precinct> Get()
+    public IHttpActionResult Get()
     {
-      return Precinct.GetCached();
+      return Ok(Precinct.GetCached());
     }
 
-    public List<FoundAddress> Post(SearchAddress sa)
+    public IHttpActionResult Post(SearchAddress sa)
     {
-      return FoundAddress.Find(sa);
+      return Ok(FoundAddress.Find(sa));
     }
   }
 }

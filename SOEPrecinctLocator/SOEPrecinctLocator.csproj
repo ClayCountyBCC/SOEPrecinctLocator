@@ -214,6 +214,7 @@
   <ItemGroup>
     <TypeScriptCompile Include="Scripts\app.ts" />
     <TypeScriptCompile Include="Scripts\FoundAddress.ts" />
+    <TypeScriptCompile Include="Scripts\Location.ts" />
     <TypeScriptCompile Include="Scripts\map.ts" />
     <TypeScriptCompile Include="Scripts\Point.ts" />
     <TypeScriptCompile Include="Scripts\Precinct.ts" />

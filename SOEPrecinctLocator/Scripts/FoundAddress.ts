@@ -6,29 +6,212 @@ namespace PrecinctLocator
 {
   interface IFoundAddress
   {
-    Precinct: string;
     WholeAddress: string;
     City: string;
     Zip: string;
-    XCoord: number;
-    YCoord: number;
     AddressPoint: Point;
+    Locations: Array<Location>;
   }
 
   export class FoundAddress
   {
-    public Precinct: string;
-    public WholeAddress: string;
-    public City: string;
-    public Zip: string;
-    public XCoord: number;
-    public YCoord: number;
+    public WholeAddress: string = "";
+    public City: string = "";
+    public Zip: string = "";
     public AddressPoint: Point;
+    public Locations: Array<Location> = [];
 
     public constructor()
     {
 
     }
+
+    public static Load(fa: Array<FoundAddress>):void
+    {
+      PrecinctLocator.mapController.GetLocations(fa);
+    }
+
+    public static Finish(fa: Array<FoundAddress>): void
+    {
+      FoundAddress.BuildResults(fa);
+
+
+      if (fa.length > 0)
+      {
+        var results = document.getElementById("Results");
+        window.scrollTo(0, results.offsetTop);
+        mapController.Zoom(fa[0]);
+      }
+    }
+
+    public static BuildResults(fa: Array<FoundAddress>): void
+    {
+      let results = document.getElementById("Results");
+      clearElement(results);
+      let df = document.createDocumentFragment();
+      for (let a of fa)
+      {
+        let container = document.createElement("div");
+        let location = document.createElement("div");
+        let results = document.createElement("div");
+
+        container.classList.add("columns");
+
+        location.classList.add("column");
+        location.classList.add("is-one-third");     
+        let level = document.createElement("div");
+        level.classList.add("level");
+        level.style.height = "100%";
+        location.appendChild(level);
+        let levelItem = document.createElement("div");
+        level.appendChild(levelItem);        
+        let title = document.createElement("h3");
+        title.classList.add("title");
+        title.classList.add("is-3");
+        levelItem.appendChild(title);
+        if (a.City.length > 0)
+        {
+          title.appendChild(document.createTextNode(a.WholeAddress + " " + a.City + ", " + a.Zip))
+        }
+        else
+        {
+          title.appendChild(document.createTextNode(a.WholeAddress))
+        }        
+        
+        results.classList.add("column");
+        results.classList.add("is-two-thirds");
+        results.appendChild(FoundAddress.CreateDistrictsTable(a));
+
+        container.appendChild(location);
+        container.appendChild(results);
+        df.appendChild(container);
+      }
+
+      //let table = document.createElement("table");
+      //table.classList.add("table");
+      //table.classList.add("is-fullwidth");
+      //df.appendChild(table);
+      //table.appendChild(FoundAddress.BuildResultsHeaderRow());
+      //let tbody = document.createElement("tbody");
+      //table.appendChild(tbody);
+      //if (fa.length === 0)
+      //{
+      //  tbody.appendChild(FoundAddress.BuildResultsErrorRow());
+      //}
+      //else
+      //{
+      //  for (let a of fa)
+      //  {
+      //    tbody.appendChild(FoundAddress.BuildResultsRow(a));
+      //  }
+      //}
+
+      results.appendChild(df);
+    }
+
+    public static BuildResultsRow(fa: FoundAddress): HTMLTableRowElement
+    {
+      let tr = document.createElement("tr");
+      if (fa.City.length > 0)
+      {
+        tr.appendChild(CreateTableColumn(fa.WholeAddress + " " + fa.City + ", " + fa.Zip, "td"));
+      }
+      else
+      {
+        tr.appendChild(CreateTableColumn(fa.WholeAddress, "td"));
+      }
+      
+      let td = document.createElement("td");
+      td.appendChild(FoundAddress.CreateDistrictsTable(fa));
+      tr.appendChild(td);
+      return tr;
+    }
+
+    public static CreateDistrictsTable(fa: FoundAddress): HTMLTableElement
+    {
+      console.log('creating table');
+      let table = document.createElement("table");
+      table.classList.add("table");
+      table.classList.add("is-fullwidth");
+      table.appendChild(FoundAddress.BuildDistrictsHeaderRow());
+      let tbody = document.createElement("tbody");
+      table.appendChild(tbody);
+      for (let l of fa.Locations)
+      {
+        tbody.appendChild(FoundAddress.BuildDistrictsTableRow(l));
+      }
+      return table;
+    }
+
+    public static BuildDistrictsHeaderRow(): HTMLTableSectionElement
+    {
+      let thead = document.createElement("thead");
+      let tr = document.createElement("tr");
+      thead.appendChild(tr);
+      tr.appendChild(CreateTableColumn("Type", "TH", "30%"));
+      tr.appendChild(CreateTableColumn("District", "TH", "30%"));
+      tr.appendChild(CreateTableColumn("", "TH", "30%"));
+      tr.appendChild(CreateTableColumn("", "TH", "10%"));
+
+      return thead;
+    }
+
+    public static BuildDistrictsTableRow(l: Location): HTMLTableRowElement
+    {
+      let tr = document.createElement("tr");
+      tr.appendChild(CreateTableColumn(l.label, "TD"));
+      tr.appendChild(CreateTableColumn(l.value, "TD"));
+      tr.appendChild(CreateTableColumn(l.extra, "TD"));
+      tr.appendChild(FoundAddress.CreateDistrictsTableButton(l));
+      return tr;
+    }
+
+    public static BuildResultsErrorRow(): HTMLTableRowElement
+    {
+      let tr = document.createElement("tr");
+      tr.appendChild(CreateTableColumn("This address was not found.", "", "td"));
+      tr.appendChild(CreateTableColumn("", "", "td"));
+      return tr;
+    }
+
+
+    public static BuildResultsHeaderRow(): HTMLTableSectionElement
+    {
+      let thead = document.createElement("thead");
+      let tr = document.createElement("tr");
+      thead.appendChild(tr);
+      tr.appendChild(CreateTableColumn("Address", "TH", "40%"));
+      tr.appendChild(CreateTableColumn("Districts", "TH", "60%"));
+      return thead;
+    }
+
+    public static CreateDistrictsTableButton(l: Location): HTMLTableCellElement
+    {
+      let td = document.createElement("td");
+      let add = document.createElement("button");
+      add.type = "button";
+      add.classList.add("button");
+      add.classList.add("is-primary");
+      add.appendChild(document.createTextNode("View on Map"));
+      if (l === null || l.shape === null)
+      {
+        add.disabled = true;
+      }
+      else
+      {
+        add.onclick = function ()
+        {
+          var results = document.getElementById("Results");
+          window.scrollTo(0, results.offsetTop);
+          mapController.SetExtent(l);
+        }
+      }
+      td.appendChild(add);
+      return td;
+    }
+
+
+    // end
   }
 
 }

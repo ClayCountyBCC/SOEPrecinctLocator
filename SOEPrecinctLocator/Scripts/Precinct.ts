@@ -6,6 +6,7 @@ namespace PrecinctLocator
 {
   interface IPrecinct
   {
+    BoundaryId: number;
     Id: string;
     Name: string;
     Address: string
@@ -25,6 +26,7 @@ namespace PrecinctLocator
 
   export class Precinct implements IPrecinct
   {
+    public BoundaryId: number;
     public Id: string;
     public Name: string;
     public Address: string
