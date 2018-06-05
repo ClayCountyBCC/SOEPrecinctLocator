@@ -18,8 +18,9 @@ namespace PrecinctLocator
 
   export function Start(): void
   {
+    StartLoading();
     mapController = new MapController("map");
-    CheckGeolocation();
+    //CheckGeolocation();
     document.getElementById("houseNumber").focus();
     GetPrecincts();
   }
@@ -38,6 +39,27 @@ namespace PrecinctLocator
       b.disabled = true;
       b.style.visibility = "hidden";
     }
+  }
+
+  export function StartLoading(): void
+  {
+    let searchButton = <HTMLButtonElement>document.getElementById("SearchButton");
+    let locationButton = <HTMLButtonElement>document.getElementById("LocationButton");
+    searchButton.disabled = true;
+    locationButton.disabled = true;
+    searchButton.classList.add("is-loading");
+    locationButton.classList.add("is-loading");
+  }
+
+  export function FinishedLoading(): void
+  {
+    let searchButton = <HTMLButtonElement>document.getElementById("SearchButton");
+    let locationButton = <HTMLButtonElement>document.getElementById("LocationButton");
+    searchButton.disabled = false;
+    locationButton.disabled = true;
+    searchButton.classList.remove("is-loading");
+    locationButton.classList.remove("is-loading");
+    CheckGeolocation();
   }
 
   export function GetLocation(): void
@@ -107,7 +129,6 @@ namespace PrecinctLocator
     PostSearch()
       .then(function (foundAddresses)
       {
-        console.log('found addresses', foundAddresses);
         FoundAddress.Load(foundAddresses);
         HandleSearchElements("is-loading", "", false);
         return true;
@@ -207,8 +228,7 @@ namespace PrecinctLocator
       add.onclick = function ()
       {
         document.getElementById('map').scrollIntoView();
-        //mapController.SetExtent(p);
-        RemovePreviousSelections(<HTMLTableRowElement>td.parentElement);
+        RemovePreviousSelections("#ByPrecinct", <HTMLTableRowElement>td.parentElement);
         add.classList.add("is-inverted");
         td.parentElement.classList.add("is-selected");
       }
@@ -217,10 +237,10 @@ namespace PrecinctLocator
     return td;
   }
 
-  function RemovePreviousSelections(tr: HTMLTableRowElement)
+  export function RemovePreviousSelections(parentElement: string, tr: HTMLTableRowElement)
   {
-    RemoveClass("#ByPrecinct table tr.is-selected", "is-selected");
-    RemoveClass("#ByPrecinct table tr button.is-inverted", "is-inverted");
+    RemoveClass(parentElement + " table tr.is-selected", "is-selected");
+    RemoveClass(parentElement + " table tr button.is-inverted", "is-inverted");
   }
 
   function RemoveClass(query: string, classToRemove: string): void
@@ -261,7 +281,6 @@ namespace PrecinctLocator
       streetNameError.style.display = "none";
       streetName.classList.remove("is-danger");
     }
-    console.log('ValidateStreetName', isError);
     return isError;
   }
 
@@ -281,7 +300,6 @@ namespace PrecinctLocator
       houseNumberError.style.display = "none";
       houseNumber.classList.remove("is-danger");
     }
-    console.log('ValidateHouseNumber', isError);
     return isError;
   }
 

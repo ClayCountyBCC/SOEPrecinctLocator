@@ -75,6 +75,8 @@ namespace PrecinctLocator
             center: [-81.80, 29.950]
           }
           mapController.map = new Map(mapDiv, mapOptions);
+          mapController.map.on("load", mapController.MapAndLayersLoadedCheck);
+
           var toggle = new BasemapToggle({
             map: mapController.map,
             basemap: "satellite" //hybrid
@@ -96,6 +98,7 @@ namespace PrecinctLocator
                 outFields: ["PRECINCT", "OBJECTID"],
                 id: "precinctBoundaryLayer"
               });
+          mapController.PrecinctBoundaryLayer.on("load", mapController.MapAndLayersLoadedCheck);
           mapController.Layers.push(mapController.PrecinctBoundaryLayer);
 
           let layersVisible = true;
@@ -110,6 +113,7 @@ namespace PrecinctLocator
                 opacity: opacityValue,
                 id: "commissionerLayer"
               });
+          mapController.CommissionerDistrictLayer.on("load", mapController.MapAndLayersLoadedCheck);
           mapController.Layers.push(mapController.CommissionerDistrictLayer);
 
           mapController.HouseDistrictLayer =
@@ -121,6 +125,7 @@ namespace PrecinctLocator
                 opacity: opacityValue,
                 id: "houseDistrictLayer"
               });
+          mapController.HouseDistrictLayer.on("load", mapController.MapAndLayersLoadedCheck);
           mapController.Layers.push(mapController.HouseDistrictLayer);
 
           mapController.SenateDistrictLayer =
@@ -132,6 +137,7 @@ namespace PrecinctLocator
                 opacity: opacityValue,
                 id: "senateDistrictLayer"
               });
+          mapController.SenateDistrictLayer.on("load", mapController.MapAndLayersLoadedCheck);
           mapController.Layers.push(mapController.SenateDistrictLayer);
 
           mapController.SchoolBoardDistrictLayer =
@@ -143,6 +149,7 @@ namespace PrecinctLocator
                 opacity: opacityValue,
                 id: "schoolboardDistrictLayer"
               });
+          mapController.SchoolBoardDistrictLayer.on("load", mapController.MapAndLayersLoadedCheck);
           mapController.Layers.push(mapController.SchoolBoardDistrictLayer);
 
           mapController.MunicipalBoundaryLayer =
@@ -154,6 +161,7 @@ namespace PrecinctLocator
                 opacity: opacityValue,
                 id: "municipalLayer"
               });
+          mapController.MunicipalBoundaryLayer.on("load", mapController.MapAndLayersLoadedCheck);
           mapController.Layers.push(mapController.MunicipalBoundaryLayer);
 
           mapController.CommunityDevDistrictLayer =
@@ -165,6 +173,7 @@ namespace PrecinctLocator
                 opacity: opacityValue,
                 id: "cddLayer"
               });
+          mapController.CommunityDevDistrictLayer.on("load", mapController.MapAndLayersLoadedCheck);
           mapController.Layers.push(mapController.CommunityDevDistrictLayer);
 
           mapController.LAMSBDLayer = new FeatureLayer(mapController.LAMSBDLayerURL,
@@ -175,13 +184,31 @@ namespace PrecinctLocator
               opacity: opacityValue,
               id: "lamsbdLayer"
             });
+          mapController.LAMSBDLayer.on("load", mapController.MapAndLayersLoadedCheck);
           mapController.Layers.push(mapController.LAMSBDLayer);
-
-          console.log('mapController', mapController);
-          //mapController.map.addLayers([mapController.HouseDistrictLayer]);
           
           mapController.map.addLayers(mapController.Layers);
         });
+    }
+
+    public MapAndLayersLoadedCheck(event)
+    {
+      let allLayersLoaded = true;
+      for (let layer of mapController.Layers)
+      {
+        if (layer.id !== "precinctLocationLayer" && layer.id !== "locationLayer")
+        {
+          if (!layer.loaded)
+          {
+            allLayersLoaded = false;
+            break;
+          }
+        }
+      }
+      if (allLayersLoaded && mapController.map.loaded)
+      {
+        PrecinctLocator.FinishedLoading();
+      }
     }
 
     public closeDialog()
@@ -236,128 +263,102 @@ namespace PrecinctLocator
       require([
         "esri/geometry/Point",
         "esri/geometry/Polygon",
-        "esri/tasks/query"],
-        function (Point, Polygon, Query)
+        "esri/tasks/query",
+        "dojo/promise/all"],
+        function (Point, Polygon, Query, all)
         {
+          let promises = [];
           for (let fa of foundAddresses)
           {
+            if (fa.Locations === null || fa.Locations === undefined)
+            {
+              fa.Locations = [];
+            }
             let pt = new Point([fa.AddressPoint.Longitude, fa.AddressPoint.Latitude]);
             let query = new Query();
             query.geometry = pt;
             for (let layer of mapController.Layers)
             {
-              console.log('layer', layer);
               if (layer.id !== "precinctLocationLayer" && layer.id !== "locationLayer")
               {
-                layer.queryFeatures(query, function (response)
+
+                let promise = layer.queryFeatures(query, function (response)
                 {
                   for (let feature of response.features)
                   {
                     if (feature.geometry.contains(pt))
                     {
-                      console.log('found point', feature.attributes);
+                      mapController.ParseFeature(fa.Locations, layer, feature);
                     }
                   }
-
                 }, function (errorResponse)
                   {
                     console.log('an error occurred', errorResponse);
                   });
+                promises.push(promise);
               }
             }
           }
+          all(promises).then(function ()
+          {
+            FoundAddress.Finish(foundAddresses);
+          });
         });
     }
     
-    public GetLocationsOld(foundAddresses: Array<FoundAddress>): void 
+    public ParseFeature(locations: Array<Location>, layer: any, feature: any): void
     {
-      let mapController = this;
-      let m = this.map;
-      require([
-        "esri/geometry/Point",
-        "esri/geometry/Polygon"],
-        function (Point, Polygon)
-        {
-          // for production
-          //var pt = new Point([longitude, latitude]);
-          for (let fa of foundAddresses)
-          {
-            let pt = new Point([fa.AddressPoint.Longitude, fa.AddressPoint.Latitude]);
-            // for testing
-            //var pt = new Point([-81.77642, 30.11958999]);
-            let found = [];
-            for (let layer of mapController.Layers)
-            {
-              if (layer.graphics !== null && layer.graphics !== undefined)
-              {
-                for (let g of layer.graphics)
-                {
-                  if (g.geometry.contains(pt))
-                  {
-                    let location = new Location();
-                    location.id = layer.id;
-                    location.shape = g.geometry;
-                    location.extent = g.geometry.getExtent();
+      let location = new Location();
+      location.id = layer.id;
+      location.shape = feature.geometry;
+      location.extent = feature.geometry.getExtent();
 
-                    switch (layer.id)
-                    {
-                      case "precinctBoundaryLayer":
-                        location.label = "Precinct";
-                        location.value = g.attributes.PRECINCT.toString();
-                        break;
+      switch (layer.id)
+      {
+        case "precinctBoundaryLayer":
+          location.label = "Precinct";
+          location.value = feature.attributes.PRECINCT.toString();
+          break;
 
-                      case "commissionerLayer":
-                        location.label = "Commissioner District";
-                        location.value = g.attributes.District.toString();
-                        location.extra = g.attributes.CommissionerName;
-                        break;
+        case "commissionerLayer":
+          location.label = "Commissioner District";
+          location.value = feature.attributes.District.toString();
+          location.extra = feature.attributes.CommissionerName;
+          break;
 
-                      case "houseDistrictLayer":
-                        location.label = "Florida House";
-                        location.value = g.attributes.NAME;
-                        break;
+        case "houseDistrictLayer":
+          location.label = "Florida House";
+          location.value = feature.attributes.NAME;
+          break;
 
-                      case "senateDistrictLayer":
-                        location.label = "Florida Senate";
-                        location.value = g.attributes.NAME;
-                        break;
+        case "senateDistrictLayer":
+          location.label = "Florida Senate";
+          location.value = feature.attributes.NAME;
+          break;
 
-                      case "schoolboardDistrictLayer":
-                        location.label = "School Board District";
-                        location.value = g.attributes.District.toString();
-                        location.extra = g.attributes.Name;
-                        break;
+        case "schoolboardDistrictLayer":
+          location.label = "School Board District";
+          location.value = feature.attributes.District.toString();
+          location.extra = feature.attributes.Name;
+          break;
 
-                      case "lamsbdLayer":
-                        location.label = "Lake Asbury MSBU"
-                        location.value = g.attributes.Name;
-                        break;
+        case "lamsbdLayer":
+          location.label = "Lake Asbury MSBU"
+          location.value = feature.attributes.Name;
+          break;
 
-                      case "municipalLayer":
-                        break;
+        case "municipalLayer":
+          location.label = "Municipality";
+          location.value = feature.attributes.Municipality;
+          break;
 
-                      case "cddLayer":
-                        location.label = "CDD";
-                        location.value = g.attributes.Name;
-                        break;
+        case "cddLayer":
+          location.label = "CDD";
+          location.value = feature.attributes.Name;
+          break;
 
-                      default:
-                    }
-                    found.push(location);
-                  }
-                }
-              }
-              else
-              {
-                console.log('layer no good', layer);
-              }
-
-            }
-            fa.Locations = found;
-          }
-          FoundAddress.Finish(foundAddresses);
-
-        });
+      }
+      locations.push(location);
     }
 
     public Zoom(fa: FoundAddress): void

@@ -12,8 +12,9 @@ var PrecinctLocator;
     }
     ;
     function Start() {
+        StartLoading();
         PrecinctLocator.mapController = new PrecinctLocator.MapController("map");
-        CheckGeolocation();
+        //CheckGeolocation();
         document.getElementById("houseNumber").focus();
         GetPrecincts();
     }
@@ -30,6 +31,25 @@ var PrecinctLocator;
             b.style.visibility = "hidden";
         }
     }
+    function StartLoading() {
+        var searchButton = document.getElementById("SearchButton");
+        var locationButton = document.getElementById("LocationButton");
+        searchButton.disabled = true;
+        locationButton.disabled = true;
+        searchButton.classList.add("is-loading");
+        locationButton.classList.add("is-loading");
+    }
+    PrecinctLocator.StartLoading = StartLoading;
+    function FinishedLoading() {
+        var searchButton = document.getElementById("SearchButton");
+        var locationButton = document.getElementById("LocationButton");
+        searchButton.disabled = false;
+        locationButton.disabled = true;
+        searchButton.classList.remove("is-loading");
+        locationButton.classList.remove("is-loading");
+        CheckGeolocation();
+    }
+    PrecinctLocator.FinishedLoading = FinishedLoading;
     function GetLocation() {
         // Here we need to get a point and then do something with that point.
         HandleSearchElements("", "is-loading", true);
@@ -88,7 +108,6 @@ var PrecinctLocator;
         HandleSearchElements("is-loading", "", true);
         PostSearch()
             .then(function (foundAddresses) {
-            console.log('found addresses', foundAddresses);
             PrecinctLocator.FoundAddress.Load(foundAddresses);
             HandleSearchElements("is-loading", "", false);
             return true;
@@ -174,8 +193,7 @@ var PrecinctLocator;
         else {
             add.onclick = function () {
                 document.getElementById('map').scrollIntoView();
-                //mapController.SetExtent(p);
-                RemovePreviousSelections(td.parentElement);
+                RemovePreviousSelections("#ByPrecinct", td.parentElement);
                 add.classList.add("is-inverted");
                 td.parentElement.classList.add("is-selected");
             };
@@ -183,10 +201,11 @@ var PrecinctLocator;
         td.appendChild(add);
         return td;
     }
-    function RemovePreviousSelections(tr) {
-        RemoveClass("#ByPrecinct table tr.is-selected", "is-selected");
-        RemoveClass("#ByPrecinct table tr button.is-inverted", "is-inverted");
+    function RemovePreviousSelections(parentElement, tr) {
+        RemoveClass(parentElement + " table tr.is-selected", "is-selected");
+        RemoveClass(parentElement + " table tr button.is-inverted", "is-inverted");
     }
+    PrecinctLocator.RemovePreviousSelections = RemovePreviousSelections;
     function RemoveClass(query, classToRemove) {
         var qs = document.querySelectorAll(query);
         if (qs.length > 0) {
@@ -218,7 +237,6 @@ var PrecinctLocator;
             streetNameError.style.display = "none";
             streetName.classList.remove("is-danger");
         }
-        console.log('ValidateStreetName', isError);
         return isError;
     }
     PrecinctLocator.ValidateStreetName = ValidateStreetName;
@@ -235,7 +253,6 @@ var PrecinctLocator;
             houseNumberError.style.display = "none";
             houseNumber.classList.remove("is-danger");
         }
-        console.log('ValidateHouseNumber', isError);
         return isError;
     }
     PrecinctLocator.ValidateHouseNumber = ValidateHouseNumber;

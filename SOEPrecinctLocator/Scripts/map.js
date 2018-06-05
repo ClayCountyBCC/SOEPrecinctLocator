@@ -41,6 +41,7 @@ var PrecinctLocator;
                     center: [-81.80, 29.950]
                 };
                 mapController.map = new Map(mapDiv, mapOptions);
+                mapController.map.on("load", mapController.MapAndLayersLoadedCheck);
                 var toggle = new BasemapToggle({
                     map: mapController.map,
                     basemap: "satellite" //hybrid
@@ -58,6 +59,7 @@ var PrecinctLocator;
                         outFields: ["PRECINCT", "OBJECTID"],
                         id: "precinctBoundaryLayer"
                     });
+                mapController.PrecinctBoundaryLayer.on("load", mapController.MapAndLayersLoadedCheck);
                 mapController.Layers.push(mapController.PrecinctBoundaryLayer);
                 var layersVisible = true;
                 var opacityValue = 0;
@@ -69,6 +71,7 @@ var PrecinctLocator;
                         opacity: opacityValue,
                         id: "commissionerLayer"
                     });
+                mapController.CommissionerDistrictLayer.on("load", mapController.MapAndLayersLoadedCheck);
                 mapController.Layers.push(mapController.CommissionerDistrictLayer);
                 mapController.HouseDistrictLayer =
                     new FeatureLayer(mapController.HouseDistrictLayerURL, {
@@ -78,6 +81,7 @@ var PrecinctLocator;
                         opacity: opacityValue,
                         id: "houseDistrictLayer"
                     });
+                mapController.HouseDistrictLayer.on("load", mapController.MapAndLayersLoadedCheck);
                 mapController.Layers.push(mapController.HouseDistrictLayer);
                 mapController.SenateDistrictLayer =
                     new FeatureLayer(mapController.SenateDistrictLayerURL, {
@@ -87,6 +91,7 @@ var PrecinctLocator;
                         opacity: opacityValue,
                         id: "senateDistrictLayer"
                     });
+                mapController.SenateDistrictLayer.on("load", mapController.MapAndLayersLoadedCheck);
                 mapController.Layers.push(mapController.SenateDistrictLayer);
                 mapController.SchoolBoardDistrictLayer =
                     new FeatureLayer(mapController.SchoolBoardDistrictLayerURL, {
@@ -96,6 +101,7 @@ var PrecinctLocator;
                         opacity: opacityValue,
                         id: "schoolboardDistrictLayer"
                     });
+                mapController.SchoolBoardDistrictLayer.on("load", mapController.MapAndLayersLoadedCheck);
                 mapController.Layers.push(mapController.SchoolBoardDistrictLayer);
                 mapController.MunicipalBoundaryLayer =
                     new FeatureLayer(mapController.MunicipalBoundaryLayerURL, {
@@ -105,6 +111,7 @@ var PrecinctLocator;
                         opacity: opacityValue,
                         id: "municipalLayer"
                     });
+                mapController.MunicipalBoundaryLayer.on("load", mapController.MapAndLayersLoadedCheck);
                 mapController.Layers.push(mapController.MunicipalBoundaryLayer);
                 mapController.CommunityDevDistrictLayer =
                     new FeatureLayer(mapController.CommunityDevDistrictLayerURL, {
@@ -114,6 +121,7 @@ var PrecinctLocator;
                         opacity: opacityValue,
                         id: "cddLayer"
                     });
+                mapController.CommunityDevDistrictLayer.on("load", mapController.MapAndLayersLoadedCheck);
                 mapController.Layers.push(mapController.CommunityDevDistrictLayer);
                 mapController.LAMSBDLayer = new FeatureLayer(mapController.LAMSBDLayerURL, {
                     mode: FeatureLayer.MODE_SNAPSHOT,
@@ -122,12 +130,26 @@ var PrecinctLocator;
                     opacity: opacityValue,
                     id: "lamsbdLayer"
                 });
+                mapController.LAMSBDLayer.on("load", mapController.MapAndLayersLoadedCheck);
                 mapController.Layers.push(mapController.LAMSBDLayer);
-                console.log('mapController', mapController);
-                //mapController.map.addLayers([mapController.HouseDistrictLayer]);
                 mapController.map.addLayers(mapController.Layers);
             });
         }
+        MapController.prototype.MapAndLayersLoadedCheck = function (event) {
+            var allLayersLoaded = true;
+            for (var _i = 0, _a = PrecinctLocator.mapController.Layers; _i < _a.length; _i++) {
+                var layer = _a[_i];
+                if (layer.id !== "precinctLocationLayer" && layer.id !== "locationLayer") {
+                    if (!layer.loaded) {
+                        allLayersLoaded = false;
+                        break;
+                    }
+                }
+            }
+            if (allLayersLoaded && PrecinctLocator.mapController.map.loaded) {
+                PrecinctLocator.FinishedLoading();
+            }
+        };
         MapController.prototype.closeDialog = function () {
             PrecinctLocator.mapController.map.graphics.clear();
         };
@@ -163,107 +185,88 @@ var PrecinctLocator;
             require([
                 "esri/geometry/Point",
                 "esri/geometry/Polygon",
-                "esri/tasks/query"
-            ], function (Point, Polygon, Query) {
+                "esri/tasks/query",
+                "dojo/promise/all"
+            ], function (Point, Polygon, Query, all) {
+                var promises = [];
                 var _loop_1 = function (fa) {
+                    if (fa.Locations === null || fa.Locations === undefined) {
+                        fa.Locations = [];
+                    }
                     var pt = new Point([fa.AddressPoint.Longitude, fa.AddressPoint.Latitude]);
                     var query = new Query();
                     query.geometry = pt;
-                    for (var _i = 0, _a = mapController.Layers; _i < _a.length; _i++) {
-                        var layer = _a[_i];
-                        console.log('layer', layer);
+                    var _loop_2 = function (layer) {
                         if (layer.id !== "precinctLocationLayer" && layer.id !== "locationLayer") {
-                            layer.queryFeatures(query, function (response) {
+                            var promise = layer.queryFeatures(query, function (response) {
                                 for (var _i = 0, _a = response.features; _i < _a.length; _i++) {
                                     var feature = _a[_i];
                                     if (feature.geometry.contains(pt)) {
-                                        console.log('found point', feature.attributes);
+                                        mapController.ParseFeature(fa.Locations, layer, feature);
                                     }
                                 }
                             }, function (errorResponse) {
                                 console.log('an error occurred', errorResponse);
                             });
+                            promises.push(promise);
                         }
+                    };
+                    for (var _i = 0, _a = mapController.Layers; _i < _a.length; _i++) {
+                        var layer = _a[_i];
+                        _loop_2(layer);
                     }
                 };
                 for (var _i = 0, foundAddresses_1 = foundAddresses; _i < foundAddresses_1.length; _i++) {
                     var fa = foundAddresses_1[_i];
                     _loop_1(fa);
                 }
+                all(promises).then(function () {
+                    PrecinctLocator.FoundAddress.Finish(foundAddresses);
+                });
             });
         };
-        MapController.prototype.GetLocationsOld = function (foundAddresses) {
-            var mapController = this;
-            var m = this.map;
-            require([
-                "esri/geometry/Point",
-                "esri/geometry/Polygon"
-            ], function (Point, Polygon) {
-                // for production
-                //var pt = new Point([longitude, latitude]);
-                for (var _i = 0, foundAddresses_2 = foundAddresses; _i < foundAddresses_2.length; _i++) {
-                    var fa = foundAddresses_2[_i];
-                    var pt = new Point([fa.AddressPoint.Longitude, fa.AddressPoint.Latitude]);
-                    // for testing
-                    //var pt = new Point([-81.77642, 30.11958999]);
-                    var found = [];
-                    for (var _a = 0, _b = mapController.Layers; _a < _b.length; _a++) {
-                        var layer = _b[_a];
-                        if (layer.graphics !== null && layer.graphics !== undefined) {
-                            for (var _c = 0, _d = layer.graphics; _c < _d.length; _c++) {
-                                var g = _d[_c];
-                                if (g.geometry.contains(pt)) {
-                                    var location_1 = new PrecinctLocator.Location();
-                                    location_1.id = layer.id;
-                                    location_1.shape = g.geometry;
-                                    location_1.extent = g.geometry.getExtent();
-                                    switch (layer.id) {
-                                        case "precinctBoundaryLayer":
-                                            location_1.label = "Precinct";
-                                            location_1.value = g.attributes.PRECINCT.toString();
-                                            break;
-                                        case "commissionerLayer":
-                                            location_1.label = "Commissioner District";
-                                            location_1.value = g.attributes.District.toString();
-                                            location_1.extra = g.attributes.CommissionerName;
-                                            break;
-                                        case "houseDistrictLayer":
-                                            location_1.label = "Florida House";
-                                            location_1.value = g.attributes.NAME;
-                                            break;
-                                        case "senateDistrictLayer":
-                                            location_1.label = "Florida Senate";
-                                            location_1.value = g.attributes.NAME;
-                                            break;
-                                        case "schoolboardDistrictLayer":
-                                            location_1.label = "School Board District";
-                                            location_1.value = g.attributes.District.toString();
-                                            location_1.extra = g.attributes.Name;
-                                            break;
-                                        case "lamsbdLayer":
-                                            location_1.label = "Lake Asbury MSBU";
-                                            location_1.value = g.attributes.Name;
-                                            break;
-                                        case "municipalLayer":
-                                            break;
-                                        case "cddLayer":
-                                            location_1.label = "CDD";
-                                            location_1.value = g.attributes.Name;
-                                            break;
-                                        default:
-                                    }
-                                    found.push(location_1);
-                                }
-                            }
-                        }
-                        else {
-                            console.log('layer no good', layer);
-                        }
-                    }
-                    fa.Locations = found;
-                }
-                PrecinctLocator.FoundAddress.Finish(foundAddresses);
-            });
+        MapController.prototype.ParseFeature = function (locations, layer, feature) {
+            var location = new PrecinctLocator.Location();
+            location.id = layer.id;
+            location.shape = feature.geometry;
+            location.extent = feature.geometry.getExtent();
+            switch (layer.id) {
+                case "precinctBoundaryLayer":
+                    location.label = "Precinct";
+                    location.value = feature.attributes.PRECINCT.toString();
+                    break;
+                case "commissionerLayer":
+                    location.label = "Commissioner District";
+                    location.value = feature.attributes.District.toString();
+                    location.extra = feature.attributes.CommissionerName;
+                    break;
+                case "houseDistrictLayer":
+                    location.label = "Florida House";
+                    location.value = feature.attributes.NAME;
+                    break;
+                case "senateDistrictLayer":
+                    location.label = "Florida Senate";
+                    location.value = feature.attributes.NAME;
+                    break;
+                case "schoolboardDistrictLayer":
+                    location.label = "School Board District";
+                    location.value = feature.attributes.District.toString();
+                    location.extra = feature.attributes.Name;
+                    break;
+                case "lamsbdLayer":
+                    location.label = "Lake Asbury MSBU";
+                    location.value = feature.attributes.Name;
+                    break;
+                case "municipalLayer":
+                    location.label = "Municipality";
+                    location.value = feature.attributes.Municipality;
+                    break;
+                case "cddLayer":
+                    location.label = "CDD";
+                    location.value = feature.attributes.Name;
+                    break;
+            }
+            locations.push(location);
         };
         MapController.prototype.Zoom = function (fa) {
             var mapController = this;

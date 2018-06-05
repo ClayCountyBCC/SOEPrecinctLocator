@@ -56,6 +56,7 @@ namespace PrecinctLocator
         let results = document.createElement("div");
 
         container.classList.add("columns");
+        container.style.border = "1px solid #dbdbdb";
 
         location.classList.add("column");
         location.classList.add("is-one-third");     
@@ -87,25 +88,6 @@ namespace PrecinctLocator
         df.appendChild(container);
       }
 
-      //let table = document.createElement("table");
-      //table.classList.add("table");
-      //table.classList.add("is-fullwidth");
-      //df.appendChild(table);
-      //table.appendChild(FoundAddress.BuildResultsHeaderRow());
-      //let tbody = document.createElement("tbody");
-      //table.appendChild(tbody);
-      //if (fa.length === 0)
-      //{
-      //  tbody.appendChild(FoundAddress.BuildResultsErrorRow());
-      //}
-      //else
-      //{
-      //  for (let a of fa)
-      //  {
-      //    tbody.appendChild(FoundAddress.BuildResultsRow(a));
-      //  }
-      //}
-
       results.appendChild(df);
     }
 
@@ -129,7 +111,6 @@ namespace PrecinctLocator
 
     public static CreateDistrictsTable(fa: FoundAddress): HTMLTableElement
     {
-      console.log('creating table');
       let table = document.createElement("table");
       table.classList.add("table");
       table.classList.add("is-fullwidth");
@@ -201,6 +182,9 @@ namespace PrecinctLocator
       {
         add.onclick = function ()
         {
+          PrecinctLocator.RemovePreviousSelections("#Results", <HTMLTableRowElement>td.parentElement);
+          add.classList.add("is-inverted");
+          td.parentElement.classList.add("is-selected");
           var results = document.getElementById("Results");
           window.scrollTo(0, results.offsetTop);
           mapController.SetExtent(l);

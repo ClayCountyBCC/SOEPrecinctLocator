@@ -30,6 +30,7 @@ var PrecinctLocator;
                 var location_1 = document.createElement("div");
                 var results_1 = document.createElement("div");
                 container.classList.add("columns");
+                container.style.border = "1px solid #dbdbdb";
                 location_1.classList.add("column");
                 location_1.classList.add("is-one-third");
                 var level = document.createElement("div");
@@ -55,24 +56,6 @@ var PrecinctLocator;
                 container.appendChild(results_1);
                 df.appendChild(container);
             }
-            //let table = document.createElement("table");
-            //table.classList.add("table");
-            //table.classList.add("is-fullwidth");
-            //df.appendChild(table);
-            //table.appendChild(FoundAddress.BuildResultsHeaderRow());
-            //let tbody = document.createElement("tbody");
-            //table.appendChild(tbody);
-            //if (fa.length === 0)
-            //{
-            //  tbody.appendChild(FoundAddress.BuildResultsErrorRow());
-            //}
-            //else
-            //{
-            //  for (let a of fa)
-            //  {
-            //    tbody.appendChild(FoundAddress.BuildResultsRow(a));
-            //  }
-            //}
             results.appendChild(df);
         };
         FoundAddress.BuildResultsRow = function (fa) {
@@ -89,7 +72,6 @@ var PrecinctLocator;
             return tr;
         };
         FoundAddress.CreateDistrictsTable = function (fa) {
-            console.log('creating table');
             var table = document.createElement("table");
             table.classList.add("table");
             table.classList.add("is-fullwidth");
@@ -146,6 +128,9 @@ var PrecinctLocator;
             }
             else {
                 add.onclick = function () {
+                    PrecinctLocator.RemovePreviousSelections("#Results", td.parentElement);
+                    add.classList.add("is-inverted");
+                    td.parentElement.classList.add("is-selected");
                     var results = document.getElementById("Results");
                     window.scrollTo(0, results.offsetTop);
                     PrecinctLocator.mapController.SetExtent(l);

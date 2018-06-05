@@ -8,4 +8,4 @@ var PrecinctLocator;
     }());
     PrecinctLocator.Location = Location;
 })(PrecinctLocator || (PrecinctLocator = {}));
-//# sourceMappingURL=Location.js.map
+//# sourceMappingURL=location.js.map
