@@ -6,6 +6,7 @@ var PrecinctLocator;
         function MapController(mapDiv) {
             this.mapDiv = mapDiv;
             this.PrecinctLayerURL = "https://maps.claycountygov.com:6443/arcgis/rest/services/VotingPrecinct/MapServer";
+            this.PrecinctLocationLayerURL = "https://maps.claycountygov.com:6443/arcgis/rest/services/VotingPrecinct/MapServer/0";
             this.PrecinctBoundaryLayerURL = "https://maps.claycountygov.com:6443/arcgis/rest/services/VotingPrecinct/MapServer/1";
             this.CommissionerDistrictLayerURL = "https://maps.claycountygov.com:6443/arcgis/rest/services/CommissionerDistrict/MapServer/0";
             this.HouseDistrictLayerURL = "https://maps.claycountygov.com:6443/arcgis/rest/services/FL_HouseDist/MapServer/0";
@@ -63,6 +64,13 @@ var PrecinctLocator;
                 mapController.Layers.push(mapController.PrecinctBoundaryLayer);
                 var layersVisible = false;
                 var opacityValue = 1;
+                mapController.PrecinctLocationLayer =
+                    new FeatureLayer(mapController.PrecinctLocationLayerURL, {
+                        mode: FeatureLayer.MODE_SNAPSHOT,
+                        outFields: ["*"],
+                        id: "precinctLocationDataLayer"
+                    });
+                mapController.Layers.push(mapController.PrecinctLocationLayer);
                 mapController.CommissionerDistrictLayer =
                     new FeatureLayer(mapController.CommissionerDistrictLayerURL, {
                         mode: FeatureLayer.MODE_SNAPSHOT,
@@ -93,7 +101,7 @@ var PrecinctLocator;
                 mapController.SchoolBoardDistrictLayer =
                     new FeatureLayer(mapController.SchoolBoardDistrictLayerURL, {
                         mode: FeatureLayer.MODE_SNAPSHOT,
-                        outFields: ["District", "OBJECTID", "Name"],
+                        outFields: ["District", "OBJECTID", "Name", "Email"],
                         visible: layersVisible,
                         opacity: opacityValue,
                         id: "schoolboardDistrictLayer"
@@ -111,7 +119,7 @@ var PrecinctLocator;
                 mapController.CommunityDevDistrictLayer =
                     new FeatureLayer(mapController.CommunityDevDistrictLayerURL, {
                         mode: FeatureLayer.MODE_SNAPSHOT,
-                        outFields: ["Name", "OBJECTID"],
+                        outFields: ["Name", "OBJECTID", "Id"],
                         visible: layersVisible,
                         opacity: opacityValue,
                         id: "cddLayer"
@@ -119,7 +127,7 @@ var PrecinctLocator;
                 mapController.Layers.push(mapController.CommunityDevDistrictLayer);
                 mapController.LAMSBDLayer = new FeatureLayer(mapController.LAMSBDLayerURL, {
                     mode: FeatureLayer.MODE_SNAPSHOT,
-                    outFields: ["Name", "OBJECTID"],
+                    outFields: ["Name", "OBJECTID", "Ordinance"],
                     visible: layersVisible,
                     opacity: opacityValue,
                     id: "lamsbdLayer"
@@ -159,6 +167,7 @@ var PrecinctLocator;
                             return 1;
                         return 0;
                     });
+                    PrecinctLocator.CombineLocations();
                     PrecinctLocator.BuildDistrictList();
                 });
             });
@@ -265,6 +274,13 @@ var PrecinctLocator;
                         location_1.label = "Precinct";
                         location_1.value = feature.attributes.PRECINCT.toString();
                         break;
+                    case "precinctLocationDataLayer":
+                        location_1.value = feature.attributes.ID.toString();
+                        location_1.label = feature.attributes.NAME.toString();
+                        location_1.extra = feature.attributes.NUMBER.toString() + " " +
+                            feature.attributes.NAME0.toString() + " " +
+                            feature.attributes.CITY_NAME.toString();
+                        break;
                     case "commissionerLayer":
                         location_1.label = "Commissioner District";
                         location_1.value = feature.attributes.District.toString();
@@ -272,11 +288,11 @@ var PrecinctLocator;
                         break;
                     case "houseDistrictLayer":
                         location_1.label = "Florida House";
-                        location_1.value = feature.attributes.District;
+                        location_1.value = feature.attributes.NAME;
                         break;
                     case "senateDistrictLayer":
                         location_1.label = "Florida Senate";
-                        location_1.value = feature.attributes.District;
+                        location_1.value = feature.attributes.NAME;
                         break;
                     case "schoolboardDistrictLayer":
                         location_1.label = "School Board District";

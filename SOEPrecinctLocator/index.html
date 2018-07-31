@@ -14,14 +14,16 @@
   <form id="searchForm"
         onsubmit="return PrecinctLocator.Search(event);">
     <section style="margin-bottom: 1em;"
-             class="hero is-info is-bold">
+             class="hero menu_bar">
       <div style="padding-top: 15px; padding-bottom: 15px;"
            class="hero-body">
         <div class="container">
-          <div class="title">
+          <div style="color: white;"
+               class="title">
             Clay County Voter Location Information
           </div>
-          <div class="subtitle">
+          <div style="color: white;"
+               class="subtitle">
             This application will help you find the closest or a specific Voting precinct, and show the various voting districts in Clay County.
           </div>
         </div>
@@ -63,12 +65,12 @@
         </div>
       </div>
     </section>
-    <section style="display: none; margin-bottom: 1em; max-height: 300px; overflow-x: auto;"
+    <!--<section style="display: none; margin-bottom: 1em; max-height: 300px; overflow-x: auto;"
              class="container"
              id="Print">
       <p>Clicking this button will take you to a printable version of this website.  You can then use it and print it as needed.</p>
       <p><a class="button is-primary" href="http://public.claycountygov.com/SOEPrecinctLocator">Printable Version</a></p>
-    </section>
+    </section>-->
 
     <section id="ByAddress"
              style="margin-bottom: 1em;"
@@ -137,7 +139,7 @@
                   <button type="button"
                           id="SearchButton"
                           tabindex="3"
-                          class="button is-primary"
+                          class="button menu_bar_alternate"
                           onclick="PrecinctLocator.Search()">
                     Search
                   </button>
@@ -146,7 +148,7 @@
                           disabled
                           id="LocationButton"
                           onclick="PrecinctLocator.GetLocation()"
-                          class="button is-info">
+                          class="button menu_bar">
                     Use My Current Location
                   </button>
                 </div>

@@ -14,6 +14,30 @@
   z-index: 50;
 }
 
+.menu_bar
+{
+  background-color: #1D364E;
+  color: #FFFFFF;
+
+}
+.menu_bar_alternate
+{
+  background-color: #760207;
+  color: white;
+}
+.tabs li.is-active a
+{
+  background-color: white;
+  color: #3273dc;
+}
+
+.tabs li a
+{
+  color: white;
+  background-color: inherit;
+}
+
+
 /*div.navbar-item.is-active
 .test
 {

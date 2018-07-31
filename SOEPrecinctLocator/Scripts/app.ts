@@ -31,13 +31,43 @@ namespace PrecinctLocator
     document.getElementById("houseNumber").focus();
   }
 
+  export function CombineLocations()
+  {
+    // this function is going to pull out the precinctdatalocations
+    // and combine them with the precinct boundaries
+    let precinctData = mapController.AllLocations.filter(function (j)
+    {
+      return j.id === "precinctLocationDataLayer";
+    });
+    for (let pd of precinctData)
+    {
+      let precinct = mapController.AllLocations.filter(function (j)
+      {
+        return j.id === "precinctBoundaryLayer" && j.value === pd.value;
+      });
+      if (precinct.length > 0)
+      {
+        for (let p of precinct)
+        {
+          p.value = p.value + " - " + pd.label;
+          p.extra = pd.extra;
+        }
+      }
+      else
+      {
+        console.log('not found', pd);
+      }
+    }
+    mapController.AllLocations = mapController.AllLocations.filter(function (j)
+    {
+      return j.id !== "precinctLocationDataLayer";
+    });
+  }
+
   export function BuildDistrictList()
   {
-    console.log('locations', mapController.AllLocations);
     let filter: string = (<HTMLInputElement>document.querySelector('input[name="district"]:checked')).value;
     let filtered = [];
-    console.log('original', mapController.AllLocations);
-    console.log('filter', filter);
     if (filter !== "all")
     {
       filtered = mapController.AllLocations.filter(function (j)
@@ -121,7 +151,7 @@ namespace PrecinctLocator
     let Results = document.getElementById("Results");
     let byPrecinct = document.getElementById("ByPrecinct");
     let navByPrecinct = document.getElementById("navByPrecinct");
-    let Print = document.getElementById("Print");
+    //let Print = document.getElementById("Print");
     //let navPrint = document.getElementById("navPrint");
     // first let's set everything to hidden;
     navByAddress.classList.remove("is-active");
@@ -131,7 +161,7 @@ namespace PrecinctLocator
     byAddress.style.display = "none"; // byAddress and Results should be shown/hidden as a pair.
     Results.style.display = "none";
     byPrecinct.style.display = "none";
-    Print.style.display = "none";
+    //Print.style.display = "none";
     switch (id)
     {
       case "ByAddress":

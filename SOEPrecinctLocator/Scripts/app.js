@@ -23,12 +23,39 @@ var PrecinctLocator;
         document.getElementById("houseNumber").focus();
     }
     PrecinctLocator.Start = Start;
+    function CombineLocations() {
+        // this function is going to pull out the precinctdatalocations
+        // and combine them with the precinct boundaries
+        var precinctData = PrecinctLocator.mapController.AllLocations.filter(function (j) {
+            return j.id === "precinctLocationDataLayer";
+        });
+        var _loop_1 = function (pd) {
+            var precinct = PrecinctLocator.mapController.AllLocations.filter(function (j) {
+                return j.id === "precinctBoundaryLayer" && j.value === pd.value;
+            });
+            if (precinct.length > 0) {
+                for (var _i = 0, precinct_1 = precinct; _i < precinct_1.length; _i++) {
+                    var p = precinct_1[_i];
+                    p.value = p.value + " - " + pd.label;
+                    p.extra = pd.extra;
+                }
+            }
+            else {
+                console.log('not found', pd);
+            }
+        };
+        for (var _i = 0, precinctData_1 = precinctData; _i < precinctData_1.length; _i++) {
+            var pd = precinctData_1[_i];
+            _loop_1(pd);
+        }
+        PrecinctLocator.mapController.AllLocations = PrecinctLocator.mapController.AllLocations.filter(function (j) {
+            return j.id !== "precinctLocationDataLayer";
+        });
+    }
+    PrecinctLocator.CombineLocations = CombineLocations;
     function BuildDistrictList() {
-        console.log('locations', PrecinctLocator.mapController.AllLocations);
         var filter = document.querySelector('input[name="district"]:checked').value;
         var filtered = [];
-        console.log('original', PrecinctLocator.mapController.AllLocations);
-        console.log('filter', filter);
         if (filter !== "all") {
             filtered = PrecinctLocator.mapController.AllLocations.filter(function (j) {
                 return j.id === filter;
@@ -98,7 +125,7 @@ var PrecinctLocator;
         var Results = document.getElementById("Results");
         var byPrecinct = document.getElementById("ByPrecinct");
         var navByPrecinct = document.getElementById("navByPrecinct");
-        var Print = document.getElementById("Print");
+        //let Print = document.getElementById("Print");
         //let navPrint = document.getElementById("navPrint");
         // first let's set everything to hidden;
         navByAddress.classList.remove("is-active");
@@ -108,7 +135,7 @@ var PrecinctLocator;
         byAddress.style.display = "none"; // byAddress and Results should be shown/hidden as a pair.
         Results.style.display = "none";
         byPrecinct.style.display = "none";
-        Print.style.display = "none";
+        //Print.style.display = "none";
         switch (id) {
             case "ByAddress":
                 navByAddress.classList.add("is-active");
