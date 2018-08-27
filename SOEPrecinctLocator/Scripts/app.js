@@ -321,18 +321,21 @@ var PrecinctLocator;
         return isError;
     }
     PrecinctLocator.ValidateHouseNumber = ValidateHouseNumber;
-    function GetPrecincts() {
-        var p = new PrecinctLocator.Precinct();
-        p.GetPrecincts()
-            .then(function (precincts) {
-            console.log('Precincts Returned', precincts);
-            PrecinctLocator.Precincts = precincts;
-            //BuildPrecincts(precincts);
-        }, function () {
-            console.log('error getting precincts');
-            PrecinctLocator.Precincts = [];
-        });
-    }
+    //function GetPrecincts()
+    //{
+    //  let p = new Precinct();
+    //  p.GetPrecincts()
+    //    .then(function (precincts: Array<Precinct>)
+    //    {
+    //      console.log('Precincts Returned', precincts);
+    //      Precincts = precincts;
+    //      //BuildPrecincts(precincts);
+    //    }, function (): void
+    //      {
+    //        console.log('error getting precincts');
+    //        Precincts = [];
+    //      });
+    //}
     function PostSearch() {
         var houseNumber = document.getElementById("houseNumber");
         var streetName = document.getElementById("streetName");

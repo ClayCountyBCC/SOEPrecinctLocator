@@ -368,21 +368,21 @@ namespace PrecinctLocator
     return isError;
   }
 
-  function GetPrecincts()
-  {
-    let p = new Precinct();
-    p.GetPrecincts()
-      .then(function (precincts: Array<Precinct>)
-      {
-        console.log('Precincts Returned', precincts);
-        Precincts = precincts;
-        //BuildPrecincts(precincts);
-      }, function (): void
-        {
-          console.log('error getting precincts');
-          Precincts = [];
-        });
-  }
+  //function GetPrecincts()
+  //{
+  //  let p = new Precinct();
+  //  p.GetPrecincts()
+  //    .then(function (precincts: Array<Precinct>)
+  //    {
+  //      console.log('Precincts Returned', precincts);
+  //      Precincts = precincts;
+  //      //BuildPrecincts(precincts);
+  //    }, function (): void
+  //      {
+  //        console.log('error getting precincts');
+  //        Precincts = [];
+  //      });
+  //}
 
   function PostSearch():Promise<Array<FoundAddress>>
   {

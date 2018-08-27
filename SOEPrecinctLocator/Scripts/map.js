@@ -165,6 +165,10 @@ var PrecinctLocator;
                             return -1;
                         if (a.label > b.label)
                             return 1;
+                        if (a.value < b.value)
+                            return -1;
+                        if (a.value > b.value)
+                            return 1;
                         return 0;
                     });
                     PrecinctLocator.CombineLocations();
@@ -288,11 +292,13 @@ var PrecinctLocator;
                         break;
                     case "houseDistrictLayer":
                         location_1.label = "Florida House";
-                        location_1.value = feature.attributes.NAME;
+                        location_1.value = feature.attributes.District;
+                        location_1.extra = feature.attributes.NAME;
                         break;
                     case "senateDistrictLayer":
                         location_1.label = "Florida Senate";
-                        location_1.value = feature.attributes.NAME;
+                        location_1.value = feature.attributes.District;
+                        location_1.extra = feature.attributes.NAME;
                         break;
                     case "schoolboardDistrictLayer":
                         location_1.label = "School Board District";

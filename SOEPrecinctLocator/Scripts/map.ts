@@ -225,6 +225,8 @@ namespace PrecinctLocator
             {
               if (a.label < b.label) return -1;
               if (a.label > b.label) return 1;
+              if (a.value < b.value) return -1;
+              if (a.value > b.value) return 1;
               return 0;              
             });
             PrecinctLocator.CombineLocations();
@@ -350,13 +352,13 @@ namespace PrecinctLocator
     
     public ParseFeature(locations: Array<Location>, layer: any, features: Array<any>): void
     {
+
       for (let feature of features)
       {
         let location = new Location();
         location.id = layer.id;
         location.shape = feature.geometry;
-        location.extent = feature.geometry.getExtent();
-
+        location.extent = feature.geometry.getExtent();       
         switch (layer.id)
         {
           case "precinctBoundaryLayer":
@@ -381,12 +383,14 @@ namespace PrecinctLocator
 
           case "houseDistrictLayer":
             location.label = "Florida House";
-            location.value = feature.attributes.NAME;
+            location.value = feature.attributes.District;
+            location.extra = feature.attributes.NAME;
             break;
 
           case "senateDistrictLayer":
             location.label = "Florida Senate";
-            location.value = feature.attributes.NAME;
+            location.value = feature.attributes.District;
+            location.extra = feature.attributes.NAME;
             break;
 
           case "schoolboardDistrictLayer":
